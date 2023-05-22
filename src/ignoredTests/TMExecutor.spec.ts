@@ -4,20 +4,9 @@ import { TMExecutor } from "../TMExecutor";
 import { CodeParser } from "../CodeParser";
 import { CodeConverter } from "../CodeConverter";
 import { ConstantTMState, TuringMachine } from "../TuringMachine";
+import { readFileSync } from "fs";
 
-const isDiv2 = `alphabet = {0, 1}
-module q {
-    while 0, 1 {
-        move right
-    } if blank {
-        move left
-        if 1, blank {
-            reject
-        } if 0 {
-            accept
-        }
-    }
-}`;
+const isDiv2 = readFileSync("./examples/isDiv2.txt", "utf-8");
 
 const isDiv2Parser = new CodeParser(isDiv2);
 const isDiv2Program = isDiv2Parser.parse();

@@ -39,7 +39,7 @@ export class CodeParser {
      */
     private _matchComments():boolean {
         let finished = false;
-        while (this._wrapper.currentValue === "//") {
+        while (this._wrapper.currentValue === "##") {
             finished = this._ignoreComments();
         }
         return finished;

@@ -2,60 +2,47 @@ import { CodeParser } from "../CodeParser";
 import { CodePosition } from "../CodePosition";
 import { BasicBlockContext, Direction, GoToContext, IfCaseContext, SwitchBlockContext, TerminationContext, TerminationState, WhileCaseContext } from "../Context";
 
-const simple = `alphabet = {a, b}
-module block1 {
+const simple = `alphabet = [a, b]
+module block1():
     move right
     changeto blank
-    goto block2
-} 
-module block2 {
-    while 0 {
+    goto block2()
+module block2():
+    while 0:
         changeto b
         move left
-    } if 1, blank {
+    if 1, blank:
         changeto a
+        accept`;
+
+const isDiv2Iterative = `## checks whether a binary number is a multiple of 2 iteratively
+alphabet = [0, 1] ## only binary values allowed
+module isDiv2():
+    ## check the last letter is 0
+    move end
+    if 0:
         accept
-    }
-}`;
+    else:
+        reject`;
 
-const isDiv2Iterative = `// checks whether a binary number is a multiple of 2 iteratively
-alphabet = {0, 1} // only binary values allowed
-module isDiv2 {
-    // move to the end first
-    while 0, 1 {
-        move right
-    } if blank {
-        // check the last letter is 0
-        move left
-        if 0 {
-            accept
-        } if 1, blank {
-            reject
-        }
-    }
-}`;
-
-const isDiv2Recursive = `alphabet = {0, 1}
-module isDiv2 {
-    if blank {
+const isDiv2Recursive = `alphabet = [0, 1]
+module isDiv2():
+    if blank:
         move right
         reject
-    } if 0 {
+    if 0:
         move right
-        if blank {
+        if blank:
             accept
-        } if 0, 1 {
+        if 0, 1:
             goto isDiv2
-        }
-    } if 1 {
+    if 1:
         move right
-        if blank {
+        if blank:
             reject
-        } if 0, 1 {
+        if 0, 1:
             goto isDiv2
-        }
-    }
-}`;
+`;
 
 const simpleParser = new CodeParser(simple);
 const simpleProgram = simpleParser.parse();

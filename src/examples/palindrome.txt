@@ -1,0 +1,20 @@
+alphabet = [a, b]
+module palindrome():
+    if a:
+        goto check(a)
+    if b:
+        goto check(b)
+    else:
+        accept
+
+# given that the tape starts with letter x,
+# check that it also ends with x at the end
+module check(x):
+    changeto blank
+    move end
+    if x, blank:
+        changeto blank
+        move start
+        goto palindrome()
+    else:
+        reject

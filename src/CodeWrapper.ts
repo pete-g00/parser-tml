@@ -51,7 +51,12 @@ export class CodeWrapper {
     /**
      * The non-whitespace delimiters that are allowed in code.
      */
-    private _delimiters = [",", "{", "}", "="];
+    private _delimiters = [",", "[", "]", ":", "=", "(", ")"];
+
+    /**
+     * The indentation stack
+     */
+    public indentationStack:number[];
     
     /**
      * Creates a CodeWrapper instance for the given code.
@@ -67,6 +72,7 @@ export class CodeWrapper {
         this._endIndex = 0;
         this._notMoved = true;
         this._isCodeRead = false;
+        this.indentationStack = [0];
     }
 
     /**
@@ -91,15 +97,48 @@ export class CodeWrapper {
      */
     private get _nextStartCol():number {
         let nextStart = this._endIndex;
-
+        let newLine = false;
+        let lineNumber = this._lineNumber;
+        let colOffset = this._colOffset;
+        
         while (nextStart < this.code.length && this._isCharWhitespace(nextStart)) {
             // if newline, increment the line number and the column offset
             if (this.code[nextStart] === "\n") {
-                this._lineNumber ++;
-                this._colOffset = nextStart+1;
+                lineNumber ++;
+                colOffset = nextStart+1;
+                newLine = true;
             }
             
             nextStart ++;
+        }
+
+        // we're at the end of file (i.e. only whitespace was remaining)
+        if (nextStart >= this.code.length) {
+            return nextStart;
+        }
+
+        this._lineNumber = lineNumber;
+        this._colOffset = colOffset;
+
+        // update the indentation stack if we encounter a newline
+        if (newLine) {
+            let topIndent = this.indentationStack[this.indentationStack.length-1];
+            const startIndex = nextStart - this._colOffset;
+            // add values if the indentation has increased; 
+            if (startIndex > topIndent) {
+                this.indentationStack.push(startIndex);
+            } else {
+                // otherwise, pop the values until we get that value 
+                // (push -1 if the indent is smaller but not present on the stack)
+                while (startIndex < topIndent && this.indentationStack.length >= 0) {
+                    this.indentationStack.pop();
+                    topIndent = this.indentationStack[this.indentationStack.length-1];
+                }
+    
+                if (startIndex > topIndent) {
+                    this.indentationStack.push(-1);
+                }
+            }
         }
         
         return nextStart;
@@ -114,7 +153,7 @@ export class CodeWrapper {
             return this._startIndex + 1;
         }
         
-        // otherwise, find the next end index- the next delimiter (whitespace character OR "," OR "{" OR "}") OR EOF
+        // otherwise, find the next end index- the next delimiter (whitespace character OR delimiters) OR EOF
         let nextEnd = this._startIndex + 1;
         while (nextEnd < this.code.length && !this._isCharDelimiter(nextEnd)) {
             nextEnd ++;
@@ -143,12 +182,11 @@ export class CodeWrapper {
         if (nextStart >= this.code.length) {
             this._isCodeRead = true;
             return false;
+        } else {
+            this._startIndex = nextStart;
+            this._endIndex = this._nextEndCol;
+            return true;
         }
-        this._startIndex = nextStart;
-
-        this._endIndex = this._nextEndCol;
-
-        return true;   
     }
 
     /**

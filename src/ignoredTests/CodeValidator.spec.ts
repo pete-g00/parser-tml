@@ -1,89 +1,83 @@
 import { CodeParser } from "../CodeParser";
 import { CodeValidator } from "../CodeValidator";
 
-const goToValid = `alphabet = {a, b}
-module a {
+const goToValid = `alphabet = [a, b]
+module a():
     move left
-    goto b
-}
-module b {
+    goto b()
+module b():
     accept
-}`;
+`;
 
-const goToInvalid = `alphabet = {a, b}
-module a {
+const goToInvalid = `alphabet = [a, b]
+module a():
     move left
-    goto b
-}`;
+    goto b()
+`;
 
-const goToRecursive = `alphabet = {a, b}
-module a {
+const goToRecursive = `alphabet = [a, b]
+module a():
     move left
-    goto a
-}`;
+    goto a()
+`;
 
-const switchInvalid = `alphabet = {a, b}
-module a {
-    if x {
+const switchInvalid = `alphabet = [a, b]
+module a():
+    if x:
         accept
-    }
-}`;
+`;
 
-const switchDuplicate = `alphabet = {a, b}
-module a {
-    if a {
+const switchDuplicate = `alphabet = [a, b]
+module a():
+    if a:
         accept
-    } if a {
+    if a:
         reject
-    }
-}`;
+`;
 
-const switchIncomplete = `alphabet = {a, b}
-module a {
-    if a, blank {
+const switchIncomplete = `alphabet = [a, b]
+module a():
+    if a, blank:
         accept
-    }
-}`;
+`;
 
-const switchMissingBlank = `alphabet = {a, b}
-module a {
-    if a {
+const switchMissingBlank = `alphabet = [a, b]
+module a():
+    if a:
         accept
-    }
-}`;
+`;
 
-const validSwitch = `alphabet = {a, b}
-module a {
-    if a, blank {
+const validSwitch = `alphabet = [a, b]
+module a():
+    if a, blank:
         accept
-    } while b {
+    while b:
         changeto a
         move right
-    }
-}`;
+`;
 
-const nonFinalModuleFlow = `alphabet = {a, b}
-module a {
+const nonFinalModuleFlow = `alphabet = [a, b]
+module a:
     goto a
     move left
-}`;
+`;
 
-const finalModuleFlow = `alphabet = {a, b}
-module a {
+const finalModuleFlow = `alphabet = [a, b]
+module a:
     move left
     move right
     reject
-}`;
+`;
 
-const noFlowModule = `alphabet = {a, b}
-module a {
+const noFlowModule = `alphabet = [a, b]
+module a:
     move left
     move right
     changeto blank
-}`;
+`;
 
-const nonFinalIfFlow = `alphabet = {a, b}
-module a {
+const nonFinalIfFlow = `alphabet = [a, b]
+module a:
     if a, b, blank {
         changeto b
         move left
@@ -91,85 +85,77 @@ module a {
         goto a
         move left
     }
-}`;
+`;
 
-const finalIfFlow = `alphabet = {a, b}
-module a {
+const finalIfFlow = `alphabet = [a, b]
+module a:
     if a, b, blank {
         move left
         move right
         reject
     }
-}`;
+`;
 
-const noFlowIf = `alphabet = {a, b}
-module a {
+const noFlowIf = `alphabet = [a, b]
+module a:
     if a, b, blank {
         move left
         move right
         changeto blank
     }
-}`;
+`;
 
-const changeToInvalid = `alphabet = {a, b}
-module a {
+const changeToInvalid = `alphabet = [a, b]
+module a:
     changeto x
-}`;
+`;
 
-const changeToBlank = `alphabet = {a, b}
-module a {
+const changeToBlank = `alphabet = [a, b]
+module a:
     changeto blank
-}`;
+`;
 
-const changeToValid = `alphabet = {a, b}
-module a {
+const changeToValid = `alphabet = [a, b]
+module a:
     changeto b
-}`;
+`;
 
-const duplicateModules = `alphabet = {a, b}
-module a {
+const duplicateModules = `alphabet = [a, b]
+module a:
     goto a
-} 
-module a {
+module a:
     goto a
-}`;
+`;
 
-const moduleCalledAccept = `alphabet = {a, b}
-module accept {
+const moduleCalledAccept = `alphabet = [a, b]
+module accept():
     move right
-}`;
+`;
 
-const moduleCalledReject = `alphabet = {a, b}
-module reject {
+const moduleCalledReject = `alphabet = [a, b]
+module reject():
     changeto blank
-}`;
+`;
 
-const firstIfBlockSwitch = `alphabet = {a, b}
-module simple {
-    if a, b {
-        if a, b {
+const firstIfBlockSwitch = `alphabet = [a, b]
+module simple():
+    if a, b:
+        if a, b:
             move right
-        } if blank {
+        if blank:
             reject
-        }
-    } if blank {
+    if blank:
         reject
-    }
-}`;
+`;
 
-const validProgram = `alphabet = {0, 1}
-module isDiv2 {
-    while 0, 1 {
-        move right
-    } if blank {
-        move left
-        if 0 {
-            accept
-        } if 1, blank {
-            reject
-        }
-    }
-}`;
+const validProgram = `alphabet = [0, 1]
+module isDiv2():
+    move end
+    if 0:
+        accept
+    else:
+        reject
+`;
 
 test("CodeValidator does not throw an error in a valid program with a goto command", () => {
     const goToValidParser = new CodeParser(goToValid);

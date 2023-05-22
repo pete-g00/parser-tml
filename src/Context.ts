@@ -50,7 +50,12 @@ export enum TerminationState {
     /**
      * The termination state accept
      */
-    ACCEPT = "accept"
+    ACCEPT = "accept",
+
+    /**
+     * The termination state halt
+     */
+    HALT = "halt"
 }
 
 /**
@@ -111,7 +116,17 @@ export enum Direction {
     /**
      * The move direction right
      */
-    RIGHT = "R"
+    RIGHT = "R",
+
+    /**
+     * The move direction start
+     */
+    START = "S",
+
+    /**
+     * The move direction end
+     */
+    END = "E"
 }
 
 /**
@@ -275,14 +290,8 @@ export class BasicBlockContext extends NormalBlockContext {
  * Every case instance applies to a set of values.
  */
 export abstract class CaseContext extends NormalBlockContext {
-    /**
-     * The values that a case applies to
-     */
-    public readonly values:Set<string>;
-    
-    public constructor(position:CodePosition, values:Set<string>) {
+    public constructor(position:CodePosition) {
         super(position);
-        this.values = values;
     }
 
     public abstract get firstBlock():BasicBlockContext | CoreBasicBlockContext;
@@ -299,8 +308,14 @@ export class IfCaseContext extends CaseContext {
      */
     public readonly blocks:NormalBlockContext[];
 
+    /**
+     * The values that the if case applies to
+     */
+    public readonly values:Set<string>;
+
     public constructor(position:CodePosition, values:Set<string>, blocks:NormalBlockContext[]) {
-        super(position, values);
+        super(position);
+        this.values = values;
         this.blocks = blocks;
     }
 
@@ -314,6 +329,31 @@ export class IfCaseContext extends CaseContext {
 }
 
 /**
+ * The class `ElseCaseContext` is the class used to represent an else case.
+ * 
+ * An else case is composed of the blocks within the body.
+ */
+export class ElseCaseContext extends CaseContext {
+    /**
+     * The blocks in the body of the if case
+     */
+    public readonly blocks:NormalBlockContext[];
+
+    public constructor(position:CodePosition, blocks:NormalBlockContext[]) {
+        super(position);
+        this.blocks = blocks;
+    }
+
+    public get firstBlock(): BasicBlockContext {
+        return this.blocks[0] as BasicBlockContext;
+    }
+
+    public visit<T>(visitor: CodeVisitor<T>): T {
+        return visitor.visitElse(this);
+    }
+}
+
+/**
  * The class `WhileCaseContext` is the class used to represent a while case.
  * 
  * A while case is composed of the values it applies to and the single core block within the body.
@@ -323,10 +363,16 @@ export class WhileCaseContext extends CaseContext {
      * The block in the body of the while case
      */
     public readonly block:CoreBasicBlockContext;
+    
+    /**
+     * The values that the while case applies to
+     */
+    public readonly values:Set<string>;
 
     public constructor(position:CodePosition, values:Set<string>, block:CoreBasicBlockContext) {
-        super(position, values);
+        super(position);
         this.block = block;
+        this.values = values;
     }
 
     public get firstBlock(): CoreBasicBlockContext {
@@ -369,15 +415,21 @@ export class ModuleContext extends Context {
      * The identifier used to reference the module
      */
     public readonly identifier:string;
+
+    /**
+     * The parameters of the module
+     */
+    public readonly params:Set<string>;
     
     /**
      * The blocks present in the module
      */
     public readonly blocks:NormalBlockContext[];
 
-    public constructor(position:CodePosition, identifier:string, blocks:NormalBlockContext[]) {
+    public constructor(position:CodePosition, identifier:string, params:Set<string>, blocks:NormalBlockContext[]) {
         super(position);
         this.identifier = identifier;
+        this.params = params;
         this.blocks = blocks;
     }
 

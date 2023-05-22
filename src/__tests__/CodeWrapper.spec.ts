@@ -1,18 +1,17 @@
 import { CodePosition } from "../CodePosition";
 import { CodeWrapper } from "../CodeWrapper";
 
-const code = `alphabet = {0, 1}
-module basic {
+const code = `alphabet = [0, 1]
+module basic():
     move right
     accept
-}`;
+`;
 
 const brokenCode = [
-    ["alphabet", "=", "{","0", ",", "1", "}"],
-    ["module", "basic", "{"],
+    ["alphabet", "=", "[","0", ",", "1", "]"],
+    ["module", "basic", "(", ")", ":"],
     ["move", "right"], 
-    ["accept"], 
-    ["}"]
+    ["accept"]
 ];
 
 function _moveToEnd(wrapper:CodeWrapper):void {
@@ -60,14 +59,14 @@ test("CodeWrapper returns the final value when getting the current value after t
     _moveToEnd(wrapper);
     wrapper.moveNext();
 
-    expect(wrapper.currentValue).toBe("}");
+    expect(wrapper.currentValue).toBe("accept");
 });
 
 test("CodeWrapper return the final position when getting the current position after the code has been read", () => {
     const wrapper = new CodeWrapper(code);
     _moveToEnd(wrapper);
     wrapper.moveNext();
-    const position = new CodePosition(4, 5, 0, 1);
+    const position = new CodePosition(3, 4, 4, 10);
 
     expect(wrapper.currentPosition).toEqual(position);
 });
@@ -104,3 +103,5 @@ test("CodeWrapper correctly calculates the column numbers", () => {
         startIndex = 0;
     }
 });
+
+// indentation stuff => line by line 

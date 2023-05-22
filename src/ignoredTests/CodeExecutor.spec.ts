@@ -2,56 +2,9 @@ import { Direction, IfCaseContext, SwitchBlockContext, TerminationState } from "
 import { TMTape } from "../TMTape";
 import { CodeParser } from "../CodeParser";
 import { CodeExecutor } from "../CodeExecutor";
+import { readFileSync } from "fs";
 
-const palindrome = `alphabet = {a, b}
-module palindrome {
-    if blank {
-        accept
-    } if a {
-        changeto blank
-        move right
-        while a, b {
-            move right
-        } if blank {
-            move left
-            if a, blank {
-                changeto blank
-                move left
-                goto goToStart
-            } if b {
-                changeto blank
-                move left
-                move right
-            }
-        }
-    } if b {
-        changeto blank
-        move right
-        while a, b {
-            move right
-        } if blank {
-            move left
-            if b, blank {
-                changeto blank
-                move left
-                goto goToStart
-            } if a {
-                changeto blank
-                move left
-                move right
-                reject
-            }
-        }
-    }
-}
-module goToStart {
-    while a, b {
-        move left
-    } if blank {
-        move right
-        goto palindrome
-    }
-}`;
+const palindrome = readFileSync("./examples/palindrome.txt", "utf-8");
 
 const palindromeParser = new CodeParser(palindrome);
 const palindromeProgram = palindromeParser.parse();

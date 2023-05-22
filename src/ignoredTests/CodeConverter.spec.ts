@@ -3,85 +3,75 @@ import { CodeConverter } from "../CodeConverter";
 import { TMChange } from "../TuringMachine";
 import { Direction } from "../Context";
 
-const singleModuleSingleBasicBlockNoGoto = `alphabet = {a, b}
-module simple {
+const singleModuleSingleBasicBlockNoGoto = `alphabet = [a, b]
+module simple():
     changeto blank
     move right
-}`;
+`;
 
-const singleModuleMultipleBasicBlockWithGoto = `alphabet = {a, b}
-module simple {
+const singleModuleMultipleBasicBlockWithGoto = `alphabet = [a, b]
+module simple():
     move right
     changeto b
     move left
     goto simple
-}`;
+`;
 
-const singleModuleSingleIfCaseSingleIfBlock = `alphabet = {a, b}
-module simple {
-    while a, b {
-        move right
-    } if blank {
-        move left
-        accept
-    }
-}`;
+const singleModuleSingleIfCaseSingleIfBlock = `alphabet = [a, b]
+module simple():
+    move end
+    accept
+`;
 
-const singleModuleMultipleIfCasesSingleIfBlock = `alphabet = {a, b}
-module simple {
-    if blank {
-        changeto b
-        move left
-        changeto blank
-        move right
-        changeto a
-        move left
-    } while a, b {
-        changeto blank
-        move right
-    }
-}`;
-
-const singleModuleMultipleIfCasesOneMultipleIfBlocks = `alphabet = {a, b}
-module simple {
-    if a {
-        move left
-    } while b {
-        move right
-    } if blank {
-        move right
-        changeto b
-        move left
-        goto simple
-    }
-}`;
-
-const singleModuleMultipleIfCasesTwoMultipleIfBlocks = `alphabet = {a, b}
-module simple {
+const singleModuleMultipleIfCasesSingleIfBlock = `alphabet = [a, b]
+module simple():
+    move end
+    changeto b
+    move left
     changeto blank
-    if a {
+    move right
+    changeto a
+    move left
+`;
+
+const singleModuleMultipleIfCasesOneMultipleIfBlocks = `alphabet = [a, b]
+module simple():
+    if a:
+        move left
+    while b:
+        move right
+    if blank:
+        move right
+        changeto b
+        move left
+        goto simple()
+`;
+
+const singleModuleMultipleIfCasesTwoMultipleIfBlocks = `alphabet = [a, b]
+module simple():
+    changeto blank
+    if a:
         move left
         changeto a
         move left
         reject
-    } while b {
+    while b:
         move right
-    } if blank {
+    if blank:
         move right
         changeto b
         move right
         goto simple
-    }
-}`;
+`;
 
-const multipleModules = `alphabet = {a, b}
-module simple {
+const multipleModules = `alphabet = [a, b]
+module simple():
     move right
-    goto basic
-} module basic {
+    goto basic()
+module basic():
     move left
-    goto simple
-}`;
+    goto simple()
+`;
 
 test("CodeConverter can convert a single module with a single basic block and no goto", () => {
     const singleModuleSingleBasicBlockNoGotoParser = new CodeParser(singleModuleSingleBasicBlockNoGoto);

@@ -1,4 +1,4 @@
-import { AlphabetContext, BasicBlockContext, ChangeToContext, Context, CoreBasicBlockContext, GoToContext, IfCaseContext, ModuleContext, MoveContext, ProgramContext, SwitchBlockContext, TerminationContext, WhileCaseContext } from "./Context";
+import { AlphabetContext, BasicBlockContext, ChangeToContext, Context, CoreBasicBlockContext, ElseCaseContext, GoToContext, IfCaseContext, ModuleContext, MoveContext, ProgramContext, SwitchBlockContext, TerminationContext, WhileCaseContext } from "./Context";
 
 export abstract class CodeVisitor<T> {
     public visit(context:Context):T {
@@ -18,6 +18,8 @@ export abstract class CodeVisitor<T> {
     public abstract visitBasicBlock(context:BasicBlockContext):T;
 
     public abstract visitIf(context:IfCaseContext):T;
+
+    public abstract visitElse(context:ElseCaseContext):T;
 
     public abstract visitWhile(context:WhileCaseContext):T;
 

@@ -1,0 +1,7 @@
+alphabet = [0, 1]
+module isDiv2():
+    move end
+    if 0:
+        accept
+    else:
+        reject

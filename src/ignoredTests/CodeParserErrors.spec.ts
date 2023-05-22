@@ -1,71 +1,64 @@
 import { CodeParser } from "../CodeParser";
 
 const emptyProgram = ``;
-const invalidStart = `module main {}`;
+const invalidStart = `module main():`;
 const noAlphabet = `alphabet = {}`;
 const invalidLetterInAlphabet = `alphabet = {.}`;
 const invalidAlphabetLen2 = `alphabet = {ab}`;
 const alphabetNoCommas = `alphabet = {a b c}`;
-const incompleteBracket = `alphabet = {a, b}
-module main {`;
-const noModules = `alphabet = {a, b}`;
-const emptyModule = `alphabet = {a, b}
-module main {}`;
-const invalidDirection = `alphabet = {a, b}
-module main {
+const incompleteBracket = `alphabet = [a, b]
+module main`;
+const noModules = `alphabet = [a, b]`;
+const emptyModule = `alphabet = [a, b]
+module main():`;
+const invalidDirection = `alphabet = [a, b]
+module main:
     move up
-}`;
-const invalidCommand = `alphabet = {a, b}
-module main {
+`;
+const invalidCommand = `alphabet = [a, b]
+module main():
     stop
-}`;
-const invalidCoreCommand = `alphabet = {a, b}
-module main {
-    while a, b {
+`;
+const invalidCoreCommand = `alphabet = [a, b]
+module main():
+    while a, b:
         accept
-    }
-}`;
-const whileNoLetter = `alphabet = {a, b}
-module main {
-    while {}
-}`;
-const whileNoCommand = `alphabet = {a, b}
-module main {
-        while a {}
-}`;
-const whileMultipleBlocks = `alphabet = {a, b}
-module main {
-        while blank {
-            move left
-            move right
-        }
-}`;
-const ifNoLetter = `alphabet = {a, b}
-module main {
-    if {}
-}`;
-const ifNoBody = `alphabet = {a, b}
-module main {
-    if a {
-
-    }
-}`;
-const invalidCase = `alphabet = {a, b}
-module main {
-    if a {
+`;
+const whileNoLetter = `alphabet = [a, b]
+module main():
+    while:
+`;
+const whileNoCommand = `alphabet = [a, b]
+module main():
+    while a:
+`;
+const whileMultipleBlocks = `alphabet = [a, b]
+module main():
+    while blank:
         move left
-    } when x {
         move right
-    }
-}`;
-
-const nonFinalSwitchBlock = `alphabet = {a, b}
-module a {
-    if a, b, blank {
+`;
+const ifNoLetter = `alphabet = [a, b]
+module main():
+    if:
+`;
+const ifNoBody = `alphabet = [a, b]
+module main():
+    if a:
+`;
+const invalidCase = `alphabet = [a, b]
+module main():
+    if a:
+        move left
+    when x:
+        move right
+`;
+const nonFinalSwitchBlock = `alphabet = [a, b]
+module a:
+    if a, b, blank:
         changeto blank
-    }
     accept
-}`;
+`;
 
 test("CodeParser throws an error when the program is empty", () => {
     const parser = new CodeParser(emptyProgram);
