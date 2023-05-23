@@ -1,6 +1,6 @@
 import { CodeError } from "./CodeError";
 import { CodeVisitor } from "./CodeVisitor";
-import { ProgramContext, ModuleContext, BasicBlockContext, CoreBasicBlockContext, SwitchBlockContext, IfCaseContext, WhileCaseContext, ChangeToContext, GoToContext, BlockContext, AlphabetContext } from "./Context";
+import { ProgramContext, ModuleContext, BasicBlockContext, CoreBasicBlockContext, SwitchBlockContext, IfCaseContext, WhileCaseContext, ChangeToContext, GoToContext, BlockContext, AlphabetContext, ElseCaseContext } from "./Context";
 
 /**
  * `CodeValidator` ensures that the parsed TM program is valid by performing multiple checks on it.
@@ -13,23 +13,41 @@ export class CodeValidator extends CodeVisitor<boolean> {
     private _alphabet?:Set<string>;
 
     /**
-     * The name of the modules present
+     * The name of the modules present with the number of parameters they have
      */
-    private _moduleNames:Set<string>;
+    private _moduleNames:Map<string, number>;
 
     private _program:ProgramContext;
+
+    /**
+     * The parameters of the current module
+     */
+    private parameters?:Set<string>;
     
     /**
      * `CodeValidator` ensures that the parsed TM program is valid. In particular, it checks the following:
      * 
-     * 1. Every module identifier used in *goto* statements must be defined somewhere in the program;
-     * 2. In every switch block, there exists precisely once case corresponding to every letter in the alphabet, including blank;
-     * 3. A non-final block must not have a *flow* command;
+     * 1a. Every module identifier used in *goto* statements must be defined somewhere in the program;
+     * 1b. The number of parameters in a goto statement matches the number of module arguments;
+     * 
+     * 2. In every switch block:
+     * 2a. If there is an else case, then there is nothing to check
+     * 2b. If there is no else case, and the module is parametrised, then we throw
+     * 2c. If there is no else case and the module isn't parametrised, then we throw if all letters have been covered
+     * 
+     * 3. A non-final block must not have a *flow* command; (ALLOWED)
+     * 
      * 4. A *changeto* command must change to a valid letter in the alphabet, including blank;
      * 5. There cannot be two modules with the same identifier;
-     * 6. A switch block must be the final block present;
-     * 7. A module cannot be called "accept" or "reject";
+     * 
+     * 6. A switch block must be the final block present; (ALLOWED)
+     * 
+     * 7a. The alphabet must be non-empty
+     * 7b. There must be at least 1 module
+     * 
      * 8. The first block within an if block cannot be a switch block.
+     * 
+     * 9. The module parameter labels cannot be the same as the letters in the alphabet
      * 
      * This is done using the visitor design pattern. 
      * 
@@ -38,7 +56,7 @@ export class CodeValidator extends CodeVisitor<boolean> {
     public constructor(program:ProgramContext) {
         super();
         this._program = program;
-        this._moduleNames = new Set<string>();
+        this._moduleNames = new Map<string, number>();
     }
 
     public validate() {
@@ -54,19 +72,19 @@ export class CodeValidator extends CodeVisitor<boolean> {
      */
     private _addModuleNames(program: ProgramContext): void {
         for (const module of program.modules) {
-            if (module.identifier === "accept" || module.identifier === "reject") {
-                throw new CodeError(module.position, `A module cannot be called "${module.identifier}".`);
-            }
             if (this._moduleNames.has(module.identifier)) {
                 throw new CodeError(module.position, `Duplicate module with name "${module.identifier}".`);
             }
-            this._moduleNames.add(module.identifier);
+            this._moduleNames.set(module.identifier, module.params.length);
         }
     }
     
     public visitProgram(program: ProgramContext): boolean {
         this.visit(program.alphabet);
         this._addModuleNames(program);
+        if (program.modules.length === 0) {
+            throw new CodeError(program.position, "A program should have at least one module.");
+        }
         
         for (const module of program.modules) {
             this.visit(module);
@@ -76,8 +94,11 @@ export class CodeValidator extends CodeVisitor<boolean> {
     }
 
     public visitAlphabet(context: AlphabetContext): boolean {
-        this._alphabet = context.values;
-        
+        if (context.values.length === 0) {
+            throw new CodeError(context.position, `The alphabet must have at least one letter.`);
+        }
+        this._alphabet = new Set(context.values);
+
         return true;
     }
 
@@ -114,6 +135,16 @@ export class CodeValidator extends CodeVisitor<boolean> {
     }
 
     public visitModule(module: ModuleContext): boolean {
+        this.parameters = new Set(module.params);
+        module.params.forEach((letter) => {
+            if (this._alphabet!.has(letter)) {
+                throw new CodeError(module.position, `The letter "${letter}" is both in the alphabet and a module parameter.`);
+            }
+        });
+        if (module.blocks.length == 0) {
+            throw new CodeError(module.position, "A program should have at least one module.");
+        }
+
         this._validateBlocks(module.blocks, false);
         return true;
     }
@@ -139,29 +170,42 @@ export class CodeValidator extends CodeVisitor<boolean> {
     }
 
     public visitSwitchBlock(block: SwitchBlockContext): boolean {
-        const caseSet = new Set<string>();
+        let hasFlow = false;
         const alphabetSet = new Set(this._alphabet);
         alphabetSet.add("");
 
-        let hasFlow = false;
+        this.parameters!.forEach(letter => alphabetSet.add(letter));
+        let seenElse = false;
 
-        for (const switchCase of block.cases) {
-            switchCase.values.forEach((letter) => {
-                if (caseSet.has(letter)) {
-                    throw new CodeError(block.position, `Multiple cases present for letter "${letter}".`);
-                } else if (!alphabetSet.delete(letter)) {
-                    throw new CodeError(switchCase.position, `The letter "${letter}" is not part of the alphabet.`);
+        for (let i=0; i<block.cases.length; i++) {
+            const switchCase = block.cases[i];
+            if (switchCase instanceof ElseCaseContext) {
+                if (i != block.cases.length-1) {
+                    throw new CodeError(switchCase.position, "A non-final case cannot be an else block");
                 }
-                caseSet.add(letter);
-            });
+                seenElse = true;
+            } else if (switchCase instanceof IfCaseContext || switchCase instanceof WhileCaseContext) {
+                for (const letter of switchCase.values) {
+                    const l = letter || "blank";
+                    if (letter != "" && !this._alphabet?.has(l)) {
+                        throw new CodeError(block.position, `The letter "${l}" is not part of the alphabet.`);
+                    }
+                    if (!alphabetSet.delete(letter)) {
+                        throw new CodeError(block.position, `Multiple cases present for letter "${l}".`);
+                    }
+                }
+            }
             
             if (this.visit(switchCase)) {
                 hasFlow = true;
             }
         }
 
-        if (alphabetSet.size !== 0) {
-            const missingLetters = Array.from(alphabetSet).map(val => val.length === 0 ? "blank" : `"${val}"`);
+        // not seen else and missing letters then throw
+        if (!seenElse && alphabetSet.size !== 0) {
+            const missingLetters = Array.from(alphabetSet).map(
+                val => val.length === 0 ? "blank" : `"${val}"`
+            );
             const letter = missingLetters.length === 1 ? "letter" : "letters";
             throw new CodeError(block.position, `The switch block doesn't have a case for the ${letter}: ${missingLetters.join(", ")}.`);
         }
@@ -170,7 +214,10 @@ export class CodeValidator extends CodeVisitor<boolean> {
     }
 
     public visitIf(block: IfCaseContext): boolean {
-        console.log("Visiting if");
+        return this._validateBlocks(block.blocks, true);
+    }
+
+    public visitElse(block: ElseCaseContext): boolean {
         return this._validateBlocks(block.blocks, true);
     }
     
@@ -189,8 +236,11 @@ export class CodeValidator extends CodeVisitor<boolean> {
     }
 
     public visitGoTo(command: GoToContext) : boolean {
-        if (!this._moduleNames.has(command.identifier)) {
+        const paramCount = this._moduleNames.get(command.identifier);
+        if (paramCount === undefined) {
             throw new CodeError(command.position, `Undefined module "${command.identifier}".`);
+        } else if (command.args.length != paramCount) {
+            throw new CodeError(command.position, `Expected ${paramCount} number of arguments.`);
         }
 
         return true;

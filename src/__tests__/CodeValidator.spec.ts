@@ -57,84 +57,71 @@ module a():
 `;
 
 const nonFinalModuleFlow = `alphabet = [a, b]
-module a:
-    goto a
+module a():
+    goto a()
     move left
 `;
 
 const finalModuleFlow = `alphabet = [a, b]
-module a:
+module a():
     move left
     move right
     reject
 `;
 
 const noFlowModule = `alphabet = [a, b]
-module a:
+module a():
     move left
     move right
     changeto blank
 `;
 
 const nonFinalIfFlow = `alphabet = [a, b]
-module a:
-    if a, b, blank {
+module a():
+    if a, b, blank:
         changeto b
         move left
         changeto a
-        goto a
+        goto a()
         move left
-    }
 `;
 
 const finalIfFlow = `alphabet = [a, b]
-module a:
-    if a, b, blank {
+module a():
+    if a, b, blank:
         move left
         move right
         reject
-    }
 `;
 
 const noFlowIf = `alphabet = [a, b]
-module a:
-    if a, b, blank {
+module a():
+    if a, b, blank:
         move left
         move right
         changeto blank
-    }
 `;
 
 const changeToInvalid = `alphabet = [a, b]
-module a:
+module a():
     changeto x
 `;
 
 const changeToBlank = `alphabet = [a, b]
-module a:
+module a():
     changeto blank
 `;
 
 const changeToValid = `alphabet = [a, b]
-module a:
+module a():
     changeto b
 `;
 
 const duplicateModules = `alphabet = [a, b]
-module a:
-    goto a
-module a:
-    goto a
-`;
-
-const moduleCalledAccept = `alphabet = [a, b]
-module accept():
-    move right
-`;
-
-const moduleCalledReject = `alphabet = [a, b]
-module reject():
-    changeto blank
+module a():
+    goto a()
+module a():
+    goto a()
 `;
 
 const firstIfBlockSwitch = `alphabet = [a, b]
@@ -155,6 +142,17 @@ module isDiv2():
         accept
     else:
         reject
+`;
+
+const noAlphabet = `alphabet = []`;
+
+const noModules = `alphabet = [a, b]`;
+
+const nonFinalSwitchBlock = `alphabet = [a, b]
+module a():
+    if a, b, blank:
+        changeto blank
+    accept
 `;
 
 test("CodeValidator does not throw an error in a valid program with a goto command", () => {
@@ -238,7 +236,7 @@ test("CodeValidator doesn't throw an error for a valid switch block", () => {
 });
 
 // non-final module body block with flow command fails
-test("CodeParser throws an error if the non-final block has a flow command", () => {
+test("CodeValidator throws an error if the non-final block has a flow command", () => {
     const nonFinalModuleFlowParser = new CodeParser(nonFinalModuleFlow);
     const nonFinalModuleFlowProgram = nonFinalModuleFlowParser.parse();
     const codeValidator = new CodeValidator(nonFinalModuleFlowProgram);
@@ -248,7 +246,7 @@ test("CodeParser throws an error if the non-final block has a flow command", () 
     }).toThrow(new Error(`A non-final block in a sequence of blocks cannot have a flow command.`));
 });
 
-test("CodeParser doesn't throw an error if the final block has a flow command", () => {
+test("CodeValidator doesn't throw an error if the final block has a flow command", () => {
     const finalModuleFlowParser = new CodeParser(finalModuleFlow);
     const finalModuleFlowProgram = finalModuleFlowParser.parse();
     const codeValidator = new CodeValidator(finalModuleFlowProgram);
@@ -258,7 +256,7 @@ test("CodeParser doesn't throw an error if the final block has a flow command", 
     }).not.toThrow();
 });
 
-test("CodeParser doesn't throw an error if there are no flow commands present in a module", () => {
+test("CodeValidator doesn't throw an error if there are no flow commands present in a module", () => {
     const noFlowModuleParser = new CodeParser(noFlowModule);
     const noFlowModuleProgram = noFlowModuleParser.parse();
     const codeValidator = new CodeValidator(noFlowModuleProgram);
@@ -268,7 +266,7 @@ test("CodeParser doesn't throw an error if there are no flow commands present in
     }).not.toThrow();
 });
 
-test("CodeParser throws an error if a non-final if body block has a flow command", () => {
+test("CodeValidator throws an error if a non-final if body block has a flow command", () => {
     const nonFinalIfFlowParser = new CodeParser(nonFinalIfFlow);
     const nonFinalIfFlowProgram = nonFinalIfFlowParser.parse();
     const codeValidator = new CodeValidator(nonFinalIfFlowProgram);
@@ -278,7 +276,7 @@ test("CodeParser throws an error if a non-final if body block has a flow command
     }).toThrow(new Error(`A non-final block in a sequence of blocks cannot have a flow command.`));
 });
 
-test("CodeParser doesn't throw an error if the final if body block has a flow command", () => {
+test("CodeValidator doesn't throw an error if the final if body block has a flow command", () => {
     const finalIfFlowParser = new CodeParser(finalIfFlow);
     const finalIfFlowProgram = finalIfFlowParser.parse();
     const codeValidator = new CodeValidator(finalIfFlowProgram);
@@ -288,7 +286,7 @@ test("CodeParser doesn't throw an error if the final if body block has a flow co
     }).not.toThrow();
 });
 
-test("CodeParser doesn't throw an error if the if block has no flow command", () => {
+test("CodeValidator doesn't throw an error if the if block has no flow command", () => {
     const noFlowIfParser = new CodeParser(noFlowIf);
     const noFlowIfProgram = noFlowIfParser.parse();
     const codeValidator = new CodeValidator(noFlowIfProgram);
@@ -298,7 +296,7 @@ test("CodeParser doesn't throw an error if the if block has no flow command", ()
     }).not.toThrow();
 });
 
-test("CodeParser throws an error for an invalid letter in a changeto command", () => {
+test("CodeValidator throws an error for an invalid letter in a changeto command", () => {
     const changeToInvalidParser = new CodeParser(changeToInvalid);
     const changeToInvalidProgram = changeToInvalidParser.parse();
     const codeValidator = new CodeValidator(changeToInvalidProgram);
@@ -308,7 +306,7 @@ test("CodeParser throws an error for an invalid letter in a changeto command", (
     }).toThrow(new Error(`The letter "x" is not part of the alphabet.`));
 });
 
-test("CodeParser doesn't throw an error for \"changeto blank\" command", () => {
+test("CodeValidator doesn't throw an error for \"changeto blank\" command", () => {
     const changeToBlankParser = new CodeParser(changeToBlank);
     const changeToBlankProgram = changeToBlankParser.parse();
     const codeValidator = new CodeValidator(changeToBlankProgram);
@@ -318,7 +316,7 @@ test("CodeParser doesn't throw an error for \"changeto blank\" command", () => {
     }).not.toThrow();
 });
 
-test("CodeParser doesn't throw an error for a changeto command with a valid letter from the alphabet", () => {
+test("CodeValidator doesn't throw an error for a changeto command with a valid letter from the alphabet", () => {
     const changeToValidParser = new CodeParser(changeToValid);
     const changeToValidProgram = changeToValidParser.parse();
     const codeValidator = new CodeValidator(changeToValidProgram);
@@ -336,26 +334,6 @@ test("CodeValidator throws an error if there are two modules with the same name.
     expect(() => {
         codeValidator.validate();
     }).toThrow(new Error(`Duplicate module with name "a".`));
-});
-
-test("CodeValidator throws an error if there is a module called accept", () => {
-    const moduleCalledAcceptParser = new CodeParser(moduleCalledAccept);
-    const moduleCalledAcceptProgram = moduleCalledAcceptParser.parse();
-    const codeValidator = new CodeValidator(moduleCalledAcceptProgram);
-
-    expect(() => {
-        codeValidator.validate();
-    }).toThrow(new Error(`A module cannot be called "accept".`));
-});
-
-test("CodeValidator throws an error if there is a module called reject", () => {
-    const moduleCalledRejectParser = new CodeParser(moduleCalledReject);
-    const moduleCalledRejectProgram = moduleCalledRejectParser.parse();
-    const codeValidator = new CodeValidator(moduleCalledRejectProgram);
-
-    expect(() => {
-        codeValidator.validate();
-    }).toThrow(new Error(`A module cannot be called "reject".`));
 });
 
 test("CodeValidator throws an error if the first block within an if block is a switch block", () => {
@@ -376,4 +354,24 @@ test("CodeValidator doesn't throw an error in a valid program", () => {
     expect(() => {
         codeValidator.validate();
     }).not.toThrow();
+});
+
+test("CodeValidator throws an error when the alphabet is empty", () => {
+    const noAlphabetParser = new CodeParser(noAlphabet);
+    const noAlphabetProgram = noAlphabetParser.parse();
+    const codeValidator = new CodeValidator(noAlphabetProgram);
+
+    expect(() => {
+        codeValidator.validate();
+    }).toThrow(new Error(`The alphabet must have at least one letter.`));
+});
+
+test("CodeValidator throws an error when a program has no modules", () => {
+    const noModulesParser = new CodeParser(noModules);
+    const noModulesProgram = noModulesParser.parse();
+    const codeValidator = new CodeValidator(noModulesProgram);
+
+    expect(() => {
+        codeValidator.validate();
+    }).toThrow(new SyntaxError(`A program should have at least one module.`));
 });

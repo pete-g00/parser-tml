@@ -92,7 +92,6 @@ test("CodeParser parses an else command correctly", () => {
     expect(elseCase.blocks.length).toBe(1);
 
     expect(elseCase.blocks[0]).toBeInstanceOf(BasicBlockContext);
-    console.log(elseCase.blocks[0]);
 
     expect(elseCase.position).toEqual(new CodePosition(6, 8, 4, 14));
 });

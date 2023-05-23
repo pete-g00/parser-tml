@@ -128,20 +128,17 @@ export class CodeParser {
     }
 
     /**
-     * Checks whether moveNext results in a deindentation
+     * Checks whether moveNext results in a de-indentation (or end of file)
      * 
+     * @returns true if we have de-indented; false otherwise
      */
     private _checkDeIndent(): boolean {
         const prevStackLength = this._wrapper.indentationStack.length;
         this._moveNext(true, false, false);
         const newIndentStack = this._wrapper.indentationStack;
         
-        // the indentation stack must have popped by 1
-        if (prevStackLength != newIndentStack.length-1) {
-            return false;
-        }
-
-        return true;
+        // the indentation stack must have popped (or we're at the end)
+        return this.reachedEnd || prevStackLength > newIndentStack.length;
     }
 
     /**
@@ -164,7 +161,7 @@ export class CodeParser {
         const startPosition = this._wrapper.currentPosition;
         
         const alphabet = this._parseAlphabet();
-        this._moveNext();
+        this._moveNext(false, false, false);
         
         const modules:ModuleContext[] = [];
 
@@ -244,9 +241,6 @@ export class CodeParser {
         
         const endPosition = this._wrapper.currentPosition;
         const position = CodePosition.combine(startPosition, endPosition);
-        // if (alphabet.length === 0) {
-        //     throw new CodeError(position, `The alphabet must have at least one letter.`);
-        // }
 
         return new AlphabetContext(position, alphabet);
     }
@@ -349,9 +343,6 @@ export class CodeParser {
         this._moveNext();
 
         const values = this._parseValues(":", true);
-        // if (values.length === 0) {
-        //     throw new CodeError(startPosition, `An if case must apply to at least one letter.`);
-        // }
         this._matchIndent();
         
         const blocks:NormalBlockContext[] = [];
@@ -374,9 +365,6 @@ export class CodeParser {
         this._moveNext();
 
         const values = this._parseValues(":", true);
-        // if (values.length === 0) {
-        //     throw new CodeError(startPosition, `A while case must apply to at least one letter.`);
-        // }
         this._matchIndent();
         
         const block = this._parseCoreBlock();
@@ -451,7 +439,7 @@ export class CodeParser {
         if (!finished && this._wrapper.currentValue === "move") {
             moveCommand = this._parseMove();
             endPosition = this._wrapper.currentPosition;
-            if (!this._checkDeIndent()) {
+            if (this._checkDeIndent()) {
                 finished = true;
             }
         } 

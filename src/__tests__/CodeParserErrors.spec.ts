@@ -1,51 +1,44 @@
 import { CodeParser } from "../CodeParser";
 
 const emptyProgram = ``;
+
 const invalidStart = `module main():`;
+
 const invalidLetterInAlphabet = `alphabet = [.]`;
+
 const invalidAlphabetLen2 = `alphabet = [ab]`;
+
 const alphabetNoCommas = `alphabet = [a b c]`;
+
 const incompleteBracket = `alphabet = [a, b]
 module main()`;
+
 const emptyModule = `alphabet = [a, b]
 module main():`;
+
 const invalidDirection = `alphabet = [a, b]
 module main():
     move up
 `;
+
 const invalidCommand = `alphabet = [a, b]
 module main():
     stop
 `;
+
 const invalidCoreCommand = `alphabet = [a, b]
 module main():
     while a, b:
         accept
 `;
-// const noAlphabet = `alphabet = []`;
-// const noModules = `alphabet = [a, b]`;
-// const whileNoLetter = `alphabet = [a, b]
-// module main():
-//     while:
-// `;
-// const whileNoCommand = `alphabet = [a, b]
-// module main():
-//     while a:
-// `;
-// const whileMultipleBlocks = `alphabet = [a, b]
-// module main():
-//     while blank:
-//         move left
-//         move right
-// `;
-// const ifNoLetter = `alphabet = [a, b]
-// module main():
-//     if:
-// `;
-// const ifNoBody = `alphabet = [a, b]
-// module main():
-//     if a:
-// `;
+
+const whileMultipleBlocks = `alphabet = [a, b]
+module main():
+    while blank:
+        move left
+        move right
+`;
+
 const invalidCase = `alphabet = [a, b]
 module main():
     if a:
@@ -53,38 +46,55 @@ module main():
     when x:
         move right
 `;
-// const nonFinalSwitchBlock = `alphabet = [a, b]
-// module a():
-//     if a, b, blank:
-//         changeto blank
-//     accept
-// `;
 
 const missingIndentation = `alphabet = [a, b]
 module main():
     if a:
     move left`;
+
 const unexpectedIndentation = `alphabet = [a, b]
 module main():
     if a:
         changeto blank
             move left`;
+
 const invalidIndentation = `alphabet = [a, b]
 module main():
     if a:
         changeto blank
       move left`;
+
 const unexpectedDeIndentation = `alphabet = [a, b]
 module main():
     if a:
 move left`;
+
+const ifNoLetter = `alphabet = [a, b]
+module main():
+    if:
+`;
+
+const ifNoBody = `alphabet = [a, b]
+module main():
+    if a:
+`;
+
+const whileNoLetter = `alphabet = [a, b]
+module main():
+    while:
+`;
+
+const whileNoCommand = `alphabet = [a, b]
+module main():
+    while a:
+`;
 
 test("CodeParser throws an error when the program is empty", () => {
     const parser = new CodeParser(emptyProgram);
 
     expect(() => {
         parser.parse();
-    }).toThrow(new SyntaxError("Unexpected end of file."));
+    }).toThrow(new Error("Unexpected end of file."));
 });
 
 test("CodeParser throws an error when the alphabet is not given", () => {
@@ -92,23 +102,15 @@ test("CodeParser throws an error when the alphabet is not given", () => {
 
     expect(() => {
         parser.parse();
-    }).toThrow(new SyntaxError(`Expected value "module" to be "alphabet".`));
+    }).toThrow(new Error(`Expected value "module" to be "alphabet".`));
 });
-
-// test("CodeParser throws an error when the alphabet is empty", () => {
-//     const parser = new CodeParser(noAlphabet);
-
-//     expect(() => {
-//         parser.parse();
-//     }).toThrow(new SyntaxError(`The alphabet must have at least one letter.`));
-// });
 
 test("CodeParser throws an error when the alphabet contains an invalid letter", () => {
     const parser = new CodeParser(invalidLetterInAlphabet);
     
     expect(() => {
         parser.parse();
-    }).toThrow(new SyntaxError(`The value "." must be a lowercase character or a number.`));
+    }).toThrow(new Error(`The value "." must be a lowercase character or a number.`));
 });
 
 test("CodeParser throws an error when a letter in the alphabet doesn't have length 1", () => {
@@ -116,7 +118,7 @@ test("CodeParser throws an error when a letter in the alphabet doesn't have leng
     
     expect(() => {
         parser.parse();
-    }).toThrow(new SyntaxError(`The value "ab" must have length 1.`));
+    }).toThrow(new Error(`The value "ab" must have length 1.`));
 });
 
 test("CodeParser throws an error when a letter in the alphabet has no commas", () => {
@@ -124,7 +126,7 @@ test("CodeParser throws an error when a letter in the alphabet has no commas", (
     
     expect(() => {
         parser.parse();
-    }).toThrow(new SyntaxError(`Expected value "b" to be "]".`));
+    }).toThrow(new Error(`Expected value "b" to be "]".`));
 });
 
 test("CodeParser throws an error when a bracket isn't finished", () => {
@@ -132,23 +134,15 @@ test("CodeParser throws an error when a bracket isn't finished", () => {
 
     expect(() => {
         parser.parse();
-    }).toThrow(new SyntaxError(`Unexpected end of file.`));
+    }).toThrow(new Error(`Unexpected end of file.`));
 });
-
-// test("CodeParser throws an error when a program has no modules", () => {
-//     const parser = new CodeParser(noModules);
-
-//     expect(() => {
-//         parser.parse();
-//     }).toThrow(new SyntaxError(`A program should have at least one module.`));
-// });
 
 test("CodeParser throws an error when a module has no commands", () => {
     const parser = new CodeParser(emptyModule);
 
     expect(() => {
         parser.parse();
-    }).toThrow(new SyntaxError(`Unexpected end of file.`));
+    }).toThrow(new Error(`Unexpected end of file.`));
 });
 
 test("CodeParser throws an error when the move direction isn't valid", () => {
@@ -156,7 +150,7 @@ test("CodeParser throws an error when the move direction isn't valid", () => {
 
     expect(() => {
         parser.parse();
-    }).toThrow(new SyntaxError(`Invalid direction "up".`));
+    }).toThrow(new Error(`Invalid direction "up".`));
 });
 
 test("CodeParser throws an error when a command isn't valid", () => {
@@ -164,7 +158,7 @@ test("CodeParser throws an error when a command isn't valid", () => {
     
     expect(() => {
         parser.parse();
-    }).toThrow(new SyntaxError(`Invalid basic command "stop".`));
+    }).toThrow(new Error(`Invalid basic command "stop".`));
 });
 
 test("CodeParser throws an error when a non-core command is given as a core command", () => {
@@ -172,65 +166,24 @@ test("CodeParser throws an error when a non-core command is given as a core comm
         
     expect(() => {
         parser.parse();
-    }).toThrow(new SyntaxError(`Invalid core command "accept".`));
+    }).toThrow(new Error(`Invalid core command "accept".`));
 });
 
-// test("CodeParser throws an error when a while block has multiple basic blocks", () => {
-//     const parser = new CodeParser(whileMultipleBlocks);
+test("CodeParser throws an error when a while block has multiple basic blocks", () => {
+    const parser = new CodeParser(whileMultipleBlocks);
 
-//     expect(() => {
-//         parser.parse();
-//     }).toThrow(new SyntaxError(`A while case cannot have more than one core block.`));    
-// });
-
-// test("CodeParser throws an error when an if case doesn't apply to any value", () => {
-//     const parser = new CodeParser(ifNoLetter);
-
-//     expect(() => {
-//         parser.parse();
-//     }).toThrow(new SyntaxError(`An if case must apply to at least one letter.`));
-// });
-
-// test("CodeParser throws an error when an if case doesn't have any commands", () => {
-//     const parser = new CodeParser(ifNoBody);
-
-//     expect(() => {
-//         parser.parse();
-//     }).toThrow(new SyntaxError(`An if case must have at least one command.`));
-// });
-
-// test("CodeParser throws an error when a while case doesn't apply to any value", () => {
-//     const parser = new CodeParser(whileNoLetter);
-
-//     expect(() => {
-//         parser.parse();
-//     }).toThrow(new SyntaxError(`A while case must apply to at least one letter.`));
-// });
-
-// test("CodeParser throws an error when a while case doesn't have any commands", () => {
-//     const parser = new CodeParser(whileNoCommand);
-
-//     expect(() => {
-//         parser.parse();
-//     }).toThrow(new SyntaxError(`A while case must have at least one command.`));
-// });
+    expect(() => {
+        parser.parse();
+    }).toThrow(new Error(`A core block must only be composed of a changeto and a move command.`));    
+});
 
 test("CodeParser throws an error when a case isn't an if or a while case", () => {
     const parser = new CodeParser(invalidCase);
 
     expect(() => {
         parser.parse();
-    }).toThrow(new SyntaxError(`Unexpected start of case: "when".`));
+    }).toThrow(new Error(`Unexpected start of case: "when".`));
 });
-
-// TODO: Should actually be allowed
-// test("CodeParser throws an error if a switch block is not a final block", () => {
-//     const nonFinalSwitchBlockParser = new CodeParser(nonFinalSwitchBlock);
-
-//     expect(() => {
-//         nonFinalSwitchBlockParser.parse();
-//     }).toThrow(new Error(`Unexpected start of case: "accept".`));
-// });
 
 test("CodeParser throws an error if indentation is missing", () => {
     const missingIndentationParser = new CodeParser(missingIndentation);
@@ -263,3 +216,44 @@ test("CodeParser throws an error if there is an unexpected de-indentation", () =
         unexpectedDeIndentationParser.parse();
     }).toThrow(new Error('Unexpected de-indentation.'));
 });
+
+test("CodeParser throws an error when an if case doesn't apply to any value", () => {
+    const ifNoLetterParser = new CodeParser(ifNoLetter);
+
+    expect(() => {
+        ifNoLetterParser.parse()
+    }).toThrow(new Error(`Unexpected end of file.`));
+});
+
+test("CodeParser throws an error when an if case doesn't have any commands", () => {
+    const ifNoBodyParser = new CodeParser(ifNoBody);
+
+    expect(() => {
+        ifNoBodyParser.parse();
+    }).toThrow(new Error(`Unexpected end of file.`));
+});
+
+test("CodeParser throws an error when a while case doesn't apply to any value", () => {
+    const whileNoLetterParser = new CodeParser(whileNoLetter);
+
+    expect(() => {
+        whileNoLetterParser.parse();
+    }).toThrow(new Error(`Unexpected end of file.`));
+});
+
+test("CodeParser throws an error when a while case doesn't have any commands", () => {
+    const whileNoCommandParser = new CodeParser(whileNoCommand);
+
+    expect(() => {
+        whileNoCommandParser.parse();
+    }).toThrow(new Error(`Unexpected end of file.`));
+});
+
+// TODO: Should actually be allowed
+// test("CodeParser throws an error if a switch block is not a final block", () => {
+//     const nonFinalSwitchBlockParser = new CodeParser(nonFinalSwitchBlock);
+
+//     expect(() => {
+//         nonFinalSwitchBlockParser.parse();
+//     }).toThrow(new Error(`Unexpected start of case: "accept".`));
+// });
