@@ -1,3 +1,4 @@
+## accepts binary numbers that end with 0
 alphabet = [0, 1]
 module isDiv2():
     move end

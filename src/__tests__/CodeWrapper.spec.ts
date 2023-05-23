@@ -104,4 +104,48 @@ test("CodeWrapper correctly calculates the column numbers", () => {
     }
 });
 
-// indentation stuff => line by line 
+test("The indentation stack initially contains 0 index", () => {
+    const wrapper = new CodeWrapper(code);
+    wrapper.moveNext();
+
+    expect(wrapper.indentationStack).toEqual([0]);
+});
+
+test("The indentation stack pushes after indentation", () => {
+    const wrapper = new CodeWrapper(code);
+    for (let j = 0; j < brokenCode[0].length + brokenCode[1].length; j++) {
+        wrapper.moveNext();
+    }
+    expect(wrapper.indentationStack).toEqual([0]);
+
+    wrapper.moveNext();
+    expect(wrapper.indentationStack).toEqual([0, 4]);
+});
+
+const unIndentCode = `alphabet = [0, 1]
+module basic():
+    move right
+accept
+`;
+
+test("The indentation stack pops after de-indentation", () => {
+    const wrapper = new CodeWrapper(unIndentCode);
+    for (let j = 0; j < 15; j++) {
+        wrapper.moveNext();
+    }
+    expect(wrapper.indentationStack).toEqual([0]);
+});
+
+const badIndentCode = `alphabet = [0, 1]
+module basic(x):
+    move right
+  accept
+`;
+
+test("The indentation stack pushes -1 after bad indentation", () => {
+    const wrapper = new CodeWrapper(badIndentCode);
+    for (let j = 0; j < 16; j++) {
+        wrapper.moveNext();
+    }
+    expect(wrapper.indentationStack).toEqual([0, -1]);
+});

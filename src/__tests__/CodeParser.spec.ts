@@ -1,6 +1,7 @@
+import { readFileSync } from "fs";
 import { CodeParser } from "../CodeParser";
 import { CodePosition } from "../CodePosition";
-import { BasicBlockContext, Direction, GoToContext, IfCaseContext, SwitchBlockContext, TerminationContext, TerminationState, WhileCaseContext } from "../Context";
+import { BasicBlockContext, Direction, ElseCaseContext, GoToContext, IfCaseContext, SwitchBlockContext, TerminationContext, TerminationState, WhileCaseContext } from "../Context";
 
 const simple = `alphabet = [a, b]
 module block1():
@@ -9,40 +10,13 @@ module block1():
     goto block2()
 module block2():
     while 0:
-        changeto b
         move left
     if 1, blank:
         changeto a
         accept`;
 
-const isDiv2Iterative = `## checks whether a binary number is a multiple of 2 iteratively
-alphabet = [0, 1] ## only binary values allowed
-module isDiv2():
-    ## check the last letter is 0
-    move end
-    if 0:
-        accept
-    else:
-        reject`;
-
-const isDiv2Recursive = `alphabet = [0, 1]
-module isDiv2():
-    if blank:
-        move right
-        reject
-    if 0:
-        move right
-        if blank:
-            accept
-        if 0, 1:
-            goto isDiv2
-    if 1:
-        move right
-        if blank:
-            reject
-        if 0, 1:
-            goto isDiv2
-`;
+const isDiv2Iterative = readFileSync("./src/examples/isDiv2.txt", "utf-8");
+const isDiv2Recursive = readFileSync("./src/examples/isDiv2Rec.txt", "utf-8");
 
 const simpleParser = new CodeParser(simple);
 const simpleProgram = simpleParser.parse();
@@ -56,7 +30,7 @@ const isDiv2RecursiveProgram = isDiv2RecursiveParser.parse();
 test("CodeParser parses an alphabet correctly", () => {
     const alphabet = simpleProgram.alphabet;
 
-    expect(alphabet.values).toEqual(new Set(["a", "b"]));
+    expect(alphabet.values).toEqual(["a", "b"]);
     expect(alphabet.position).toEqual(new CodePosition(0, 1, 0, 17));
 });
 
@@ -67,8 +41,8 @@ test("CodeParser parses a module correctly", () => {
     expect(modules[0].identifier).toBe("block1");
     expect(modules[0].blocks.length).toBe(2);
     
-    expect(modules[0].position).toEqual(new CodePosition(1, 6, 0, 1));
-    expect(modules[1].position).toEqual(new CodePosition(6, 15, 0, 1));
+    expect(modules[0].position).toEqual(new CodePosition(1, 5, 0, 17));
+    expect(modules[1].position).toEqual(new CodePosition(5, 11, 0, 14));
 });
 
 test("CodeParser parses a basic block correctly", () => {
@@ -81,71 +55,82 @@ test("CodeParser parses a basic block correctly", () => {
     expect(basicBlock.moveCommand).toBeUndefined();
     expect(basicBlock.flowCommand).toBeDefined();
     
-    expect(basicBlock.position).toEqual(new CodePosition(11, 13, 8, 14));
+    expect(basicBlock.position).toEqual(new CodePosition(9, 11, 8, 14));
 });
 
 test("CodeParser parses a while command correctly", () => {
-    const module = isDiv2IterativeProgram.modules[0];
+    const module = simpleProgram.modules[1];
     const switchBlock = module.blocks[0] as SwitchBlockContext;
     const whileCase = switchBlock.cases[0] as WhileCaseContext;
     
-    expect(whileCase.values).toEqual(new Set(["0", "1"]));
+    expect(whileCase.values).toEqual(["0"]);
     
     expect(whileCase.block.changeToCommand).toBeUndefined();
     expect(whileCase.block.moveCommand).toBeDefined();
 
-    expect(whileCase.position).toEqual(new CodePosition(4, 7, 4, 5));
+    expect(whileCase.position).toEqual(new CodePosition(6, 8, 4, 17));
 });
 
 test("CodeParser parses an if command correctly", () => {
     const module = isDiv2IterativeProgram.modules[0];
-    const switchBlock = module.blocks[0] as SwitchBlockContext;
-    const ifCase = switchBlock.cases[1] as IfCaseContext;
+    const switchBlock = module.blocks[1] as SwitchBlockContext;
+    const ifCase = switchBlock.cases[0] as IfCaseContext;
 
-    expect(ifCase.values).toEqual(new Set([""]));
-    expect(ifCase.blocks.length).toBe(2);
+    expect(ifCase.values).toEqual(["0"]);
+    expect(ifCase.blocks.length).toBe(1);
 
     expect(ifCase.blocks[0]).toBeInstanceOf(BasicBlockContext);
-    expect(ifCase.blocks[1]).toBeInstanceOf(SwitchBlockContext);
 
-    expect(ifCase.position).toEqual(new CodePosition(6, 15, 6, 5));
+    expect(ifCase.position).toEqual(new CodePosition(4, 6, 4, 14));
+});
+
+test("CodeParser parses an else command correctly", () => {
+    const module = isDiv2IterativeProgram.modules[0];
+    const switchBlock = module.blocks[1] as SwitchBlockContext;
+    const elseCase = switchBlock.cases[1] as ElseCaseContext;
+
+    expect(elseCase.blocks.length).toBe(1);
+
+    expect(elseCase.blocks[0]).toBeInstanceOf(BasicBlockContext);
+    console.log(elseCase.blocks[0]);
+
+    expect(elseCase.position).toEqual(new CodePosition(6, 8, 4, 14));
 });
 
 test("CodeParser parses a switch block correctly", () => {
     const module = isDiv2RecursiveProgram.modules[0];
     const switchBlock = module.blocks[0] as SwitchBlockContext;
-    expect(switchBlock.cases.length).toBe(3);
+    expect(switchBlock.cases.length).toBe(2);
 
-    expect(switchBlock.cases[0]).toBeInstanceOf(IfCaseContext);
-    expect(switchBlock.cases[0].values).toEqual(new Set([""]));
+    const cases = switchBlock.cases;
 
-    expect(switchBlock.cases[1]).toBeInstanceOf(IfCaseContext);
-    expect(switchBlock.cases[1].values).toEqual(new Set(["0"]));
+    expect(cases[0]).toBeInstanceOf(IfCaseContext);
+    const ifCase = cases[0] as IfCaseContext;
+    expect(ifCase.values).toEqual([""]);
 
-    expect(switchBlock.cases[2]).toBeInstanceOf(IfCaseContext);
-    expect(switchBlock.cases[2].values).toEqual(new Set(["1"]));
+    expect(cases[1]).toBeInstanceOf(ElseCaseContext);
 
-    expect(switchBlock.position).toEqual(new CodePosition(2, 20, 4, 5));
+    expect(switchBlock.position).toEqual(new CodePosition(2, 11, 4, 24));
 });
 
 test("CodeParser parses a move command correctly", () => {
     const module = isDiv2IterativeProgram.modules[0];
-    const switchBlock = module.blocks[0] as SwitchBlockContext;
-    const whileCase = switchBlock.cases[0] as WhileCaseContext;
-    const moveCommand = whileCase.block.moveCommand!;
+    const block = module.blocks[0] as BasicBlockContext;
+    const moveCommand = block.moveCommand!;
 
-    expect(moveCommand.direction).toBe(Direction.RIGHT);
-    expect(moveCommand.position).toEqual(new CodePosition(5, 6, 8, 18));
+    expect(moveCommand.direction).toBe(Direction.END);
+    expect(moveCommand.position).toEqual(new CodePosition(3, 4, 4, 12));
 });
 
 test("CodeParser parses a changeto command correctly", () => {
     const module = simpleProgram.modules[1];
     const switchBlock = module.blocks[0] as SwitchBlockContext;
-    const whileBlock = switchBlock.cases[0] as WhileCaseContext;
-    const changeToCommand = whileBlock.block.changeToCommand!;
+    const whileBlock = switchBlock.cases[1] as IfCaseContext;
+    const basicBlock = whileBlock.blocks[0] as BasicBlockContext;
+    const changeToCommand = basicBlock.changeToCommand!;
 
-    expect(changeToCommand.value).toBe("b");
-    expect(changeToCommand.position).toEqual(new CodePosition(8, 9, 8, 18));
+    expect(changeToCommand.value).toBe("a");
+    expect(changeToCommand.position).toEqual(new CodePosition(9, 10, 8, 18));
 });
 
 test("CodeParser parses an accept command correctly", () => {
@@ -156,29 +141,30 @@ test("CodeParser parses an accept command correctly", () => {
     const terminationCommand = basicBlock.flowCommand! as TerminationContext;
 
     expect(terminationCommand.state).toBe(TerminationState.ACCEPT);
-    expect(terminationCommand.position).toEqual(new CodePosition(12, 13, 8, 14));
+    expect(terminationCommand.position).toEqual(new CodePosition(10, 11, 8, 14));
 });
 
 test("CodeParser parses a reject command correctly", () => {
     const module = isDiv2RecursiveProgram.modules[0];
     const switchBlock = module.blocks[0] as SwitchBlockContext;
     const ifCase = switchBlock.cases[0] as IfCaseContext;
-    const basicBlock = ifCase.blocks[0] as BasicBlockContext;
+    const nestedSwitchBlock = ifCase.blocks[1] as SwitchBlockContext;
+    const nestedElseCase = nestedSwitchBlock.cases[1] as IfCaseContext;
+    const basicBlock = nestedElseCase.blocks[0] as BasicBlockContext;
     const terminationCommand = basicBlock.flowCommand! as TerminationContext;
     
     expect(terminationCommand.state).toBe(TerminationState.REJECT);
-    expect(terminationCommand.position).toEqual(new CodePosition(4, 5, 8, 14));
+    expect(terminationCommand.position).toEqual(new CodePosition(7, 8, 12, 18));
 });
 
 test("CodeParser parses a goto command correctly", () => {
     const module = isDiv2RecursiveProgram.modules[0];
     const switchBlock = module.blocks[0] as SwitchBlockContext;
-    const ifCase = switchBlock.cases[1] as IfCaseContext;
-    const nestedSwitchBlock = ifCase.blocks[1] as SwitchBlockContext;
-    const nestedIfCase = nestedSwitchBlock.cases[1] as IfCaseContext;
-    const basicBlock = nestedIfCase.blocks[0] as BasicBlockContext;
+    const elseCase = switchBlock.cases[1] as ElseCaseContext;
+    const basicBlock = elseCase.blocks[0] as BasicBlockContext;
     const goToCommand = basicBlock.flowCommand! as GoToContext;
 
-    expect(goToCommand.identifier).toBe("isDiv2");
-    expect(goToCommand.position).toEqual(new CodePosition(10, 11, 12, 23));
+    expect(goToCommand.identifier).toBe("isDiv2Rec");
+    expect(goToCommand.args.length).toBe(0);
+    expect(goToCommand.position).toEqual(new CodePosition(10, 11, 8, 24));
 });

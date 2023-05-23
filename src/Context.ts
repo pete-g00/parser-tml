@@ -87,9 +87,15 @@ export class GoToContext extends FlowChangeContext {
      */
     public readonly identifier:string;
 
-    public constructor(position:CodePosition, identifier:string) {
+    /**
+     * The arguments for the command
+     */
+    public readonly args:string[];
+
+    public constructor(position:CodePosition, args:string[], identifier:string) {
         super(position);
         this.identifier = identifier;
+        this.args = args;
     }
 
     public visit<T>(visitor: CodeVisitor<T>): T {
@@ -311,9 +317,9 @@ export class IfCaseContext extends CaseContext {
     /**
      * The values that the if case applies to
      */
-    public readonly values:Set<string>;
+    public readonly values:string[];
 
-    public constructor(position:CodePosition, values:Set<string>, blocks:NormalBlockContext[]) {
+    public constructor(position:CodePosition, values:string[], blocks:NormalBlockContext[]) {
         super(position);
         this.values = values;
         this.blocks = blocks;
@@ -367,9 +373,9 @@ export class WhileCaseContext extends CaseContext {
     /**
      * The values that the while case applies to
      */
-    public readonly values:Set<string>;
+    public readonly values:string[];
 
-    public constructor(position:CodePosition, values:Set<string>, block:CoreBasicBlockContext) {
+    public constructor(position:CodePosition, values:string[], block:CoreBasicBlockContext) {
         super(position);
         this.block = block;
         this.values = values;
@@ -419,14 +425,14 @@ export class ModuleContext extends Context {
     /**
      * The parameters of the module
      */
-    public readonly params:Set<string>;
+    public readonly params:string[];
     
     /**
      * The blocks present in the module
      */
     public readonly blocks:NormalBlockContext[];
 
-    public constructor(position:CodePosition, identifier:string, params:Set<string>, blocks:NormalBlockContext[]) {
+    public constructor(position:CodePosition, identifier:string, params:string[], blocks:NormalBlockContext[]) {
         super(position);
         this.identifier = identifier;
         this.params = params;
@@ -442,9 +448,9 @@ export class AlphabetContext extends Context {
     /**
      * The letters in the alphabet
      */
-     public readonly values:Set<string>;
+     public readonly values:string[];
 
-     public constructor(position:CodePosition, alphabet:Set<string>) {
+     public constructor(position:CodePosition, alphabet:string[]) {
         super(position);
         this.values = alphabet;
      }

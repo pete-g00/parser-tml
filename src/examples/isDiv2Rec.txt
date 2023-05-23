@@ -1,0 +1,11 @@
+alphabet = [0, 1]
+module isDiv2Rec():
+    if blank:
+        move left
+        if 0:
+            accept
+        else:
+            reject
+    else:
+        move right
+        goto isDiv2Rec()
