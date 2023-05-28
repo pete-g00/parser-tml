@@ -4,6 +4,12 @@ export abstract class CodeVisitor<T> {
     public visit(context:Context):T {
         return context.visit(this);
     }
+
+    public maybeVisit(context?:Context):T|undefined {
+        if (context !== undefined) {
+            return this.visit(context);
+        }
+    }
     
     public abstract visitTermination(context:TerminationContext):T;
 

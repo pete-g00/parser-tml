@@ -46,7 +46,7 @@ export class CodeParser {
      * 
      */
     private _matchComments() {
-        while (this._wrapper.currentValue === "##") {
+        while (this._wrapper.currentValue.startsWith("#")) {
              this._ignoreComments();
         }
     }

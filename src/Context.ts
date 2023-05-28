@@ -224,6 +224,7 @@ export abstract class BlockContext extends Context {}
         return visitor.visitCoreBasicBlock(this);
     }
 }
+
 /**
  * The class `NormalBlockContext` is the base abstract class for all block types valid in modules/if statements.
  * 
@@ -295,12 +296,17 @@ export class BasicBlockContext extends NormalBlockContext {
  * 
  * Every case instance applies to a set of values.
  */
-export abstract class CaseContext extends NormalBlockContext {
+export abstract class CaseContext extends Context {
     public constructor(position:CodePosition) {
         super(position);
     }
 
     public abstract get firstBlock():BasicBlockContext | CoreBasicBlockContext;
+
+    /**
+     * Whether this case applies to the given value.
+     */
+    public abstract applies(value:string):boolean;
 }
 
 /**
@@ -329,6 +335,10 @@ export class IfCaseContext extends CaseContext {
         return this.blocks[0] as BasicBlockContext;
     }
 
+    public applies(value: string): boolean {
+        return this.values.includes(value);
+    }
+
     public visit<T>(visitor: CodeVisitor<T>): T {
         return visitor.visitIf(this);
     }
@@ -348,6 +358,10 @@ export class ElseCaseContext extends CaseContext {
     public constructor(position:CodePosition, blocks:NormalBlockContext[]) {
         super(position);
         this.blocks = blocks;
+    }
+
+    public applies(): boolean {
+        return true;
     }
 
     public get firstBlock(): BasicBlockContext {
@@ -379,6 +393,10 @@ export class WhileCaseContext extends CaseContext {
         super(position);
         this.block = block;
         this.values = values;
+    }
+    
+    public applies(value: string): boolean {
+        return this.values.includes(value);
     }
 
     public get firstBlock(): CoreBasicBlockContext {

@@ -69,19 +69,9 @@ module main():
     if a:
 move left`;
 
-const ifNoLetter = `alphabet = [a, b]
-module main():
-    if:
-`;
-
 const ifNoBody = `alphabet = [a, b]
 module main():
     if a:
-`;
-
-const whileNoLetter = `alphabet = [a, b]
-module main():
-    while:
 `;
 
 const whileNoCommand = `alphabet = [a, b]
@@ -217,27 +207,11 @@ test("CodeParser throws an error if there is an unexpected de-indentation", () =
     }).toThrow(new Error('Unexpected de-indentation.'));
 });
 
-test("CodeParser throws an error when an if case doesn't apply to any value", () => {
-    const ifNoLetterParser = new CodeParser(ifNoLetter);
-
-    expect(() => {
-        ifNoLetterParser.parse()
-    }).toThrow(new Error(`Unexpected end of file.`));
-});
-
 test("CodeParser throws an error when an if case doesn't have any commands", () => {
     const ifNoBodyParser = new CodeParser(ifNoBody);
 
     expect(() => {
         ifNoBodyParser.parse();
-    }).toThrow(new Error(`Unexpected end of file.`));
-});
-
-test("CodeParser throws an error when a while case doesn't apply to any value", () => {
-    const whileNoLetterParser = new CodeParser(whileNoLetter);
-
-    expect(() => {
-        whileNoLetterParser.parse();
     }).toThrow(new Error(`Unexpected end of file.`));
 });
 

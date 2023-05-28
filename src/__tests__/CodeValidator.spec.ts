@@ -23,16 +23,8 @@ module a():
 
 const switchInvalid = `alphabet = [a, b]
 module a():
-    if x:
-        accept
-`;
-
-const switchDuplicate = `alphabet = [a, b]
-module a():
-    if a:
-        accept
-    if a:
-        reject
+    while x:
+        move left
 `;
 
 const switchIncomplete = `alphabet = [a, b]
@@ -56,17 +48,13 @@ module a():
         move right
 `;
 
-const nonFinalModuleFlow = `alphabet = [a, b]
+const validElseSwitch = `alphabet = [a, b]
 module a():
-    goto a()
-    move left
-`;
-
-const finalModuleFlow = `alphabet = [a, b]
-module a():
-    move left
-    move right
-    reject
+    while b:
+        changeto a
+        move right
+    else:
+        accept
 `;
 
 const noFlowModule = `alphabet = [a, b]
@@ -74,16 +62,6 @@ module a():
     move left
     move right
     changeto blank
-`;
-
-const nonFinalIfFlow = `alphabet = [a, b]
-module a():
-    if a, b, blank:
-        changeto b
-        move left
-        changeto a
-        goto a()
-        move left
 `;
 
 const finalIfFlow = `alphabet = [a, b]
@@ -135,6 +113,14 @@ module simple():
         reject
 `;
 
+const firstElseBlockSwitch = `alphabet = [a, b]
+module simple():
+    if a, b:
+        move left
+    else:
+        if blank:
+            move right`;
+
 const validProgram = `alphabet = [0, 1]
 module isDiv2():
     move end
@@ -148,12 +134,58 @@ const noAlphabet = `alphabet = []`;
 
 const noModules = `alphabet = [a, b]`;
 
-const nonFinalSwitchBlock = `alphabet = [a, b]
+const duplicateAlphabetAndParamLetter = `alphabet = [a, b]
+module main():
+    move right
+module a(b):
+    move left`;
+
+const nonFinalElse = `alphabet = [a, b]
 module a():
-    if a, b, blank:
-        changeto blank
-    accept
+    else:
+        move right
+    if a:
+        move left`;
+
+const invalidGoArgLength = `alphabet = [a, b]
+module main():
+    move right
+module b(x):
+    goto b()`;
+
+const ifNoLetter = `alphabet = [a, b]
+module main():
+    if:
+        move left
 `;
+
+const whileNoLetter = `alphabet = [a, b]
+module main():
+    while:
+        move left
+`;
+
+const parametrisedNoParameterSwitch = `alphabet = [a, b]
+module main():
+    move right
+module b(x):
+    if a:
+        move left
+    if b, blank:
+        move right`;
+        
+const parametrisedWithParameterSwitch = `alphabet = [a, b]
+module main():
+    move right
+module b(x):
+    if a:
+        move left
+    if b, x:
+        move right`;
+
+const parametrisedFirstModule = `alphabet = [a, b]
+module main(x):
+    move right`;
 
 test("CodeValidator does not throw an error in a valid program with a goto command", () => {
     const goToValidParser = new CodeParser(goToValid);
@@ -195,16 +227,6 @@ test("CodeValidator throws an error if there is a switch case with a letter not 
     }).toThrow(new Error(`The letter "x" is not part of the alphabet.`));
 });
 
-test("CodeValidator throws an error if there are multiple switch cases applying to the same letter", () => {
-    const switchDuplicateParser = new CodeParser(switchDuplicate);
-    const switchDuplicateProgram = switchDuplicateParser.parse();
-    const codeValidator = new CodeValidator(switchDuplicateProgram);
-
-    expect(() => {
-        codeValidator.validate();
-    }).toThrow(new Error(`Multiple cases present for letter "a".`));
-});
-
 test("CodeValidator throws an error if there is no switch case applying to a letter in the alphabet", () => {
     const switchIncompleteParser = new CodeParser(switchIncomplete);
     const switchIncompleteProgram = switchIncompleteParser.parse();
@@ -235,21 +257,10 @@ test("CodeValidator doesn't throw an error for a valid switch block", () => {
     }).not.toThrow();
 });
 
-// non-final module body block with flow command fails
-test("CodeValidator throws an error if the non-final block has a flow command", () => {
-    const nonFinalModuleFlowParser = new CodeParser(nonFinalModuleFlow);
-    const nonFinalModuleFlowProgram = nonFinalModuleFlowParser.parse();
-    const codeValidator = new CodeValidator(nonFinalModuleFlowProgram);
-
-    expect(() => {
-        codeValidator.validate();
-    }).toThrow(new Error(`A non-final block in a sequence of blocks cannot have a flow command.`));
-});
-
-test("CodeValidator doesn't throw an error if the final block has a flow command", () => {
-    const finalModuleFlowParser = new CodeParser(finalModuleFlow);
-    const finalModuleFlowProgram = finalModuleFlowParser.parse();
-    const codeValidator = new CodeValidator(finalModuleFlowProgram);
+test("CodeValidator doesn't throw an error for a valid switch block with an else case", () => {
+    const validElseSwitchParser = new CodeParser(validElseSwitch);
+    const validElseSwitchProgram = validElseSwitchParser.parse();
+    const codeValidator = new CodeValidator(validElseSwitchProgram);
 
     expect(() => {
         codeValidator.validate();
@@ -264,16 +275,6 @@ test("CodeValidator doesn't throw an error if there are no flow commands present
     expect(() => {
         codeValidator.validate();
     }).not.toThrow();
-});
-
-test("CodeValidator throws an error if a non-final if body block has a flow command", () => {
-    const nonFinalIfFlowParser = new CodeParser(nonFinalIfFlow);
-    const nonFinalIfFlowProgram = nonFinalIfFlowParser.parse();
-    const codeValidator = new CodeValidator(nonFinalIfFlowProgram);
-
-    expect(() => {
-        codeValidator.validate();
-    }).toThrow(new Error(`A non-final block in a sequence of blocks cannot have a flow command.`));
 });
 
 test("CodeValidator doesn't throw an error if the final if body block has a flow command", () => {
@@ -343,7 +344,17 @@ test("CodeValidator throws an error if the first block within an if block is a s
 
     expect(() => {
         codeValidator.validate();
-    }).toThrow(new Error(`The first block within an if case cannot be a switch block.`));
+    }).toThrow(new Error(`The first block within an if case must be a basic block.`));
+});
+
+test("CodeValidator throws an error if the first block within an else block is a switch block", () => {
+    const firstElseBlockSwitchParser = new CodeParser(firstElseBlockSwitch);
+    const firstElseBlockSwitchProgram = firstElseBlockSwitchParser.parse();
+    const codeValidator = new CodeValidator(firstElseBlockSwitchProgram);
+
+    expect(() => {
+        codeValidator.validate();
+    }).toThrow(new Error(`The first block within an else case must be a basic block.`));
 });
 
 test("CodeValidator doesn't throw an error in a valid program", () => {
@@ -373,5 +384,85 @@ test("CodeValidator throws an error when a program has no modules", () => {
 
     expect(() => {
         codeValidator.validate();
-    }).toThrow(new SyntaxError(`A program should have at least one module.`));
+    }).toThrow(new Error(`A program should have at least one module.`));
+});
+
+test("CodeValidator throws an error when a module has duplicate parameters and alphabet labels", () => {
+    const duplicateAlphabetAndParamLetterParser = new CodeParser(duplicateAlphabetAndParamLetter);
+    const duplicateAlphabetAndParamLetterProgram = duplicateAlphabetAndParamLetterParser.parse();
+    const codeValidator = new CodeValidator(duplicateAlphabetAndParamLetterProgram);
+
+    expect(() => {
+        codeValidator.validate();
+    }).toThrow(new Error(`The letter "b" is both in the alphabet and a module parameter.`));
+});
+
+test("CodeValidator throws an error when a non-final block is an else block", () => {
+    const nonFinalElseParser = new CodeParser(nonFinalElse);
+    const nonFinalElseProgram = nonFinalElseParser.parse();
+    const codeValidator = new CodeValidator(nonFinalElseProgram);
+
+    expect(() => {
+        codeValidator.validate();
+    }).toThrow(new Error("A non-final case cannot be an else block"));    
+});
+
+test("CodeValidator throws an error when a goto command doesn't have the right number of arguments", () => {
+    const invalidGoArgLengthParser = new CodeParser(invalidGoArgLength);
+    const invalidGoArgLengthProgram = invalidGoArgLengthParser.parse();
+    const codeValidator = new CodeValidator(invalidGoArgLengthProgram);
+
+    expect(() => {
+        codeValidator.validate();
+    }).toThrow(new Error("Expected 1 argument."));
+});
+
+test("CodeValidator throws an error when an if case doesn't apply to any value", () => {
+    const ifNoLetterParser = new CodeParser(ifNoLetter);
+    const ifNoLetterProgram = ifNoLetterParser.parse();
+    const codeValidator = new CodeValidator(ifNoLetterProgram);
+
+    expect(() => {
+        codeValidator.validate()
+    }).toThrow(new Error(`An if case must apply to at least one letter.`));
+});
+
+test("CodeValidator throws an error when a while case doesn't apply to any value", () => {
+    const whileNoLetterParser = new CodeParser(whileNoLetter);
+    const whileNoLetterProgram = whileNoLetterParser.parse();
+    const codeValidator = new CodeValidator(whileNoLetterProgram);
+
+    expect(() => {
+        codeValidator.validate();
+    }).toThrow(new Error(`A while case must apply to at least one letter.`));
+});
+
+test("CodeValidator doesn't throw an error for a non-parametrised switch block without an else inside a parametrised module", () => {
+    const parametrisedNoParameterSwitchParser = new CodeParser(parametrisedNoParameterSwitch);
+    const parametrisedNoParameterSwitchProgram = parametrisedNoParameterSwitchParser.parse();
+    const codeValidator = new CodeValidator(parametrisedNoParameterSwitchProgram);
+
+    expect(() => {
+        codeValidator.validate();
+    }).not.toThrow();
+});
+
+test("CodeValidator throws an error for a parametrised switch block without an else inside a parametrised module", () => {
+    const parametrisedWithParameterSwitchParser = new CodeParser(parametrisedWithParameterSwitch);
+    const parametrisedWithParameterSwitchProgram = parametrisedWithParameterSwitchParser.parse();
+    const codeValidator = new CodeValidator(parametrisedWithParameterSwitchProgram);
+
+    expect(() => {
+        codeValidator.validate();
+    }).toThrow(new Error(`If parametrised letters are used then the switch block must have an else case.`));
+});
+
+test("CodeValidator throws an error if the first module is parametrised", () => {
+    const parametrisedFirstModuleParser = new CodeParser(parametrisedFirstModule);
+    const parametrisedFirstModuleProgram = parametrisedFirstModuleParser.parse();
+    const codeValidator = new CodeValidator(parametrisedFirstModuleProgram);
+
+    expect(() => {
+        codeValidator.validate();
+    }).toThrow(new Error("The first module cannot have parameters."));
 });

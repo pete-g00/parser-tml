@@ -1,57 +1,59 @@
 import { CodeError } from "./CodeError";
 import { CodeVisitor } from "./CodeVisitor";
-import { ProgramContext, ModuleContext, BasicBlockContext, CoreBasicBlockContext, SwitchBlockContext, IfCaseContext, WhileCaseContext, ChangeToContext, GoToContext, BlockContext, AlphabetContext, ElseCaseContext } from "./Context";
+import { ProgramContext, ModuleContext, BasicBlockContext, CoreBasicBlockContext, SwitchBlockContext, IfCaseContext, WhileCaseContext, ChangeToContext, GoToContext, AlphabetContext, ElseCaseContext, Context } from "./Context";
 
 /**
  * `CodeValidator` ensures that the parsed TM program is valid by performing multiple checks on it.
  * 
  */
-export class CodeValidator extends CodeVisitor<boolean> {
+export class CodeValidator extends CodeVisitor<void> {
     /**
      * The alphabet of the program
      */
     private _alphabet?:Set<string>;
 
     /**
-     * The name of the modules present with the number of parameters they have
+     * The name of the modules present with the number of _parameters they have
      */
     private _moduleNames:Map<string, number>;
 
     private _program:ProgramContext;
 
     /**
-     * The parameters of the current module
+     * The _parameters of the current module
      */
-    private parameters?:Set<string>;
+    private _parameters?:Set<string>;
     
     /**
      * `CodeValidator` ensures that the parsed TM program is valid. In particular, it checks the following:
      * 
-     * 1a. Every module identifier used in *goto* statements must be defined somewhere in the program;
-     * 1b. The number of parameters in a goto statement matches the number of module arguments;
+     * - Every module identifier used in *goto* statements must be defined somewhere in the program;
      * 
-     * 2. In every switch block:
-     * 2a. If there is an else case, then there is nothing to check
-     * 2b. If there is no else case, and the module is parametrised, then we throw
-     * 2c. If there is no else case and the module isn't parametrised, then we throw if all letters have been covered
+     * - The number of parameters in a goto statement matches the number of module arguments;
      * 
-     * 3. A non-final block must not have a *flow* command; (ALLOWED)
+     * - In every switch block:
+     *      - If there is an else case, then there is nothing to check
+     *      - If there is no else case, and the module is parametrised, then we throw
+     *      - If there is no else case and the module isn't parametrised, then we throw if all letters have been covered
      * 
-     * 4. A *changeto* command must change to a valid letter in the alphabet, including blank;
-     * 5. There cannot be two modules with the same identifier;
+     * - A *changeto* command must change to a valid letter in the alphabet, including blank;
      * 
-     * 6. A switch block must be the final block present; (ALLOWED)
+     * - There cannot be two modules with the same identifier;
      * 
-     * 7a. The alphabet must be non-empty
-     * 7b. There must be at least 1 module
+     * - Empty entries are not allowed:
+     *      - The alphabet must be non-empty
+     *      - There must be at least 1 module
+     *      - An if case must apply to at least 1 letter
+     *      - A while case must apply to at least 1 letter
      * 
-     * 8. The first block within an if block cannot be a switch block.
+     * - The first block of an if/else block must be a basic block
      * 
-     * 9. The module parameter labels cannot be the same as the letters in the alphabet
+     * - The module parameter labels cannot be the same as the letters in the alphabet.
+     * 
+     * - The first module cannot have any parameters.
      * 
      * This is done using the visitor design pattern. 
      * 
-     * We use boolean to record whether a block has a *flow* command, and returns false in every other case.
      */
     public constructor(program:ProgramContext) {
         super();
@@ -61,6 +63,12 @@ export class CodeValidator extends CodeVisitor<boolean> {
 
     public validate() {
         this.visit(this._program);
+    }
+
+    public visitAll(contexts: Context[]): void {
+        for (let i = 0; i < contexts.length; i++) {
+            this.visit(contexts[i]);        
+        }
     }
 
     /**
@@ -79,103 +87,53 @@ export class CodeValidator extends CodeVisitor<boolean> {
         }
     }
     
-    public visitProgram(program: ProgramContext): boolean {
+    public visitProgram(program: ProgramContext): void {
         this.visit(program.alphabet);
         this._addModuleNames(program);
         if (program.modules.length === 0) {
             throw new CodeError(program.position, "A program should have at least one module.");
         }
-        
-        for (const module of program.modules) {
-            this.visit(module);
+        if (program.modules[0].params.length != 0) {
+            throw new CodeError(program.modules[0].position, "The first module cannot have parameters.");
         }
 
-        return true;
+        this.visitAll(program.modules);
     }
 
-    public visitAlphabet(context: AlphabetContext): boolean {
+    public visitAlphabet(context: AlphabetContext): void {
         if (context.values.length === 0) {
             throw new CodeError(context.position, `The alphabet must have at least one letter.`);
         }
         this._alphabet = new Set(context.values);
-
-        return true;
     }
 
-    /**
-     * Validates whether a sequence of blocks only has a terminating command at its final block and a switch block is a final block if present
-     * 
-     * @param blocks the blocks to validate
-     * @returns  whether the last block is a flow block
-     */
-    private _validateBlocks(blocks:BlockContext[], isIfBlock:boolean): boolean {
-        let hasFlow = false;
-        let hasSwitch = false;
-        for (let i = 0; i < blocks.length; i++) {
-            if (hasSwitch) {
-                throw new CodeError(blocks[i-1].position, `A non-final block in a sequence of blocks cannot be a switch block.`);
-            }
-            if (hasFlow) {
-                throw new CodeError(blocks[i-1].position, `A non-final block in a sequence of blocks cannot have a flow command.`);
-            } 
-
-            if (blocks[i] instanceof SwitchBlockContext) {
-                if (isIfBlock && i === 0) {
-                    throw new CodeError(blocks[i].position, `The first block within an if case cannot be a switch block.`);
-                }
-                hasSwitch = true;
-            }
-
-            if (this.visit(blocks[i])) {
-                hasFlow = true;
-            }
-        }
-        
-        return hasFlow;
-    }
-
-    public visitModule(module: ModuleContext): boolean {
-        this.parameters = new Set(module.params);
+    public visitModule(module: ModuleContext): void {
+        this._parameters = new Set(module.params);
         module.params.forEach((letter) => {
             if (this._alphabet!.has(letter)) {
                 throw new CodeError(module.position, `The letter "${letter}" is both in the alphabet and a module parameter.`);
             }
         });
-        if (module.blocks.length == 0) {
-            throw new CodeError(module.position, "A program should have at least one module.");
-        }
 
-        this._validateBlocks(module.blocks, false);
-        return true;
+        this.visitAll(module.blocks);
     }
 
-    public visitBasicBlock(block: BasicBlockContext): boolean {
-        if (block.changeToCommand !== undefined) {
-            this.visit(block.changeToCommand);
-        }
-
-        if (block.flowCommand !== undefined) {
-            this.visit(block.flowCommand);
-        }
-        
-        return block.flowCommand !== undefined;
+    public visitBasicBlock(block: BasicBlockContext): void {
+        this.maybeVisit(block.changeToCommand);
+        this.maybeVisit(block.flowCommand);
     }
     
-    public visitCoreBlock(block: CoreBasicBlockContext): boolean {
-        if (block.changeToCommand !== undefined) {
-            this.visit(block.changeToCommand);
-        }
-
-        return false;
+    public visitCoreBlock(block: CoreBasicBlockContext): void {
+        this.maybeVisit(block.changeToCommand);
     }
 
-    public visitSwitchBlock(block: SwitchBlockContext): boolean {
-        let hasFlow = false;
+    public visitSwitchBlock(block: SwitchBlockContext): void {
         const alphabetSet = new Set(this._alphabet);
         alphabetSet.add("");
 
-        this.parameters!.forEach(letter => alphabetSet.add(letter));
+        this._parameters!.forEach(letter => alphabetSet.add(letter));
         let seenElse = false;
+        let seenParamValue = false;
 
         for (let i=0; i<block.cases.length; i++) {
             const switchCase = block.cases[i];
@@ -187,74 +145,83 @@ export class CodeValidator extends CodeVisitor<boolean> {
             } else if (switchCase instanceof IfCaseContext || switchCase instanceof WhileCaseContext) {
                 for (const letter of switchCase.values) {
                     const l = letter || "blank";
-                    if (letter != "" && !this._alphabet?.has(l)) {
-                        throw new CodeError(block.position, `The letter "${l}" is not part of the alphabet.`);
+                    if (this._parameters!.has(letter)) {
+                        seenParamValue = true;
+                    } else if (letter != "" && !this._alphabet?.has(l)) {
+                        throw new CodeError(switchCase.position, `The letter "${l}" is not part of the alphabet.`);
                     }
-                    if (!alphabetSet.delete(letter)) {
-                        throw new CodeError(block.position, `Multiple cases present for letter "${l}".`);
-                    }
+                    alphabetSet.delete(letter);
                 }
-            }
-            
-            if (this.visit(switchCase)) {
-                hasFlow = true;
             }
         }
 
-        // not seen else and missing letters then throw
-        if (!seenElse && alphabetSet.size !== 0) {
-            const missingLetters = Array.from(alphabetSet).map(
+        this.visitAll(block.cases);
+
+        if (seenParamValue && !seenElse) {
+            throw new CodeError(block.position, `If parametrised letters are used then the switch block must have an else case.`);
+        } else if (!seenElse && alphabetSet.size != this._parameters!.size) {
+            const missingLetters = Array.from(alphabetSet).filter(
+                val => !this._parameters!.has(val)
+            ).map(
                 val => val.length === 0 ? "blank" : `"${val}"`
             );
             const letter = missingLetters.length === 1 ? "letter" : "letters";
             throw new CodeError(block.position, `The switch block doesn't have a case for the ${letter}: ${missingLetters.join(", ")}.`);
         }
-        
-        return hasFlow;
     }
 
-    public visitIf(block: IfCaseContext): boolean {
-        return this._validateBlocks(block.blocks, true);
+    public visitIf(block: IfCaseContext): void {
+        if (block.values.length == 0) {
+            throw new CodeError(block.position, "An if case must apply to at least one letter.");
+        }
+
+        if (!(block.blocks[0] instanceof BasicBlockContext)) {
+            throw new CodeError(block.blocks[0].position, "The first block within an if case must be a basic block.");
+        }
+
+        this.visitAll(block.blocks);
     }
 
-    public visitElse(block: ElseCaseContext): boolean {
-        return this._validateBlocks(block.blocks, true);
+    public visitElse(block: ElseCaseContext): void {
+        if (!(block.blocks[0] instanceof BasicBlockContext)) {
+            throw new CodeError(block.blocks[0].position, "The first block within an else case must be a basic block.");
+        }
+
+        this.visitAll(block.blocks);
     }
     
-    public visitWhile(block: WhileCaseContext): boolean {
+    public visitWhile(block: WhileCaseContext): void {
+        if (block.values.length == 0) {
+            throw new CodeError(block.position, "A while case must apply to at least one letter.");
+        }
         this.visit(block.block);
-
-        return false;
     }
 
-    public visitChangeTo(command: ChangeToContext): boolean  {
+    public visitChangeTo(command: ChangeToContext): void  {
         if (command.value !== "" && !this._alphabet!.has(command.value)) {
             throw new CodeError(command.position, `The letter "${command.value}" is not part of the alphabet.`);
         }
-
-        return true;
     }
 
-    public visitGoTo(command: GoToContext) : boolean {
+    public visitGoTo(command: GoToContext) : void {
         const paramCount = this._moduleNames.get(command.identifier);
         if (paramCount === undefined) {
             throw new CodeError(command.position, `Undefined module "${command.identifier}".`);
         } else if (command.args.length != paramCount) {
-            throw new CodeError(command.position, `Expected ${paramCount} number of arguments.`);
+            const argument = paramCount == 1 ? "argument" : "arguments";
+            throw new CodeError(command.position, `Expected ${paramCount} ${argument}.`);
         }
-
-        return true;
     }
 
-    public visitTermination(): boolean {
-        return true;
+    public visitTermination(): void {
+        return undefined;
     }
 
-    public visitMove(): boolean {
-        return true;
+    public visitMove(): void {
+        return undefined;
     }
     
-    public visitCoreBasicBlock(): boolean {
-        return true;
+    public visitCoreBasicBlock(): void { 
+        return undefined;
     }
 }
