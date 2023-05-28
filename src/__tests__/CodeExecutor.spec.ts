@@ -4,10 +4,16 @@ import { CodeParser } from "../CodeParser";
 import { CodeExecutor } from "../CodeExecutor";
 import { readFileSync } from "fs";
 
-const palindrome = readFileSync("./examples/palindrome.txt", "utf-8");
-
+const palindrome = readFileSync("./src/examples/palindrome.txt", "utf-8");
 const palindromeParser = new CodeParser(palindrome);
 const palindromeProgram = palindromeParser.parse();
+
+const rejectIfNoTermination = `alphabet = [a, b]
+module simple():
+    move left
+    move right`;
+const rejectIfNoTerminationParser = new CodeParser(rejectIfNoTermination);
+const rejectIfNoTerminationProgram = rejectIfNoTerminationParser.parse();
 
 test("CodeExecutor throws an error if the tape is not valid for the program", () => {
     expect(() => {
@@ -29,39 +35,17 @@ test("CodeExecutor executes the tape correctly", () => {
     const executor = new CodeExecutor("ab", palindromeProgram);
     const tape = new TMTape("ab");
 
-    const firstBlock = palindromeProgram.modules[0].blocks[0] as SwitchBlockContext;
-    const firstIfBlock = firstBlock.cases[1] as IfCaseContext;
-    const secondBlock = firstIfBlock.blocks[1] as SwitchBlockContext;
-    const secondIfBlock = secondBlock.cases[1] as IfCaseContext;
-    const thirdBlock = secondIfBlock.blocks[1] as SwitchBlockContext;
-    const thirdIfBlock = thirdBlock.cases[1] as IfCaseContext;
-    const fourthBlock = thirdIfBlock.blocks[1];
-    
+    const block = palindromeProgram.modules[1].blocks[0] as SwitchBlockContext;
+
     expect(executor.execute()).toBe(true);
-    expect(executor.currentBlock).toBe(secondBlock);
+    expect(executor.currentBlock).toBe(block);
     tape.change("");
-    tape.move(Direction.RIGHT);
-    expect(executor.tape).toEqual(tape);
-
-    expect(executor.execute()).toBe(true);
-    expect(executor.currentBlock).toBe(secondBlock);
-    tape.move(Direction.RIGHT);
-    expect(executor.tape).toEqual(tape);
-
-    expect(executor.execute()).toBe(true);
-    expect(executor.currentBlock).toBe(thirdBlock);
-    tape.move(Direction.LEFT);
-    expect(executor.tape).toEqual(tape);
-
-    expect(executor.execute()).toBe(true);
-    expect(executor.currentBlock).toBe(fourthBlock);
-    tape.change("");
-    tape.move(Direction.LEFT);
+    tape.move(Direction.END);
     expect(executor.tape).toEqual(tape);
 
     expect(executor.execute()).toBe(true);
     expect(executor.currentBlock).toBeUndefined();
-    tape.move(Direction.RIGHT);
+    tape.move(Direction.LEFT);
     expect(executor.tape).toEqual(tape);
 });
 
@@ -83,6 +67,15 @@ test("CodeExecutor terminates with the correct accept status", () => {
         continue;
     }
 
-    expect(executor.execute()).toBe(false);
     expect(executor.terminationStatus).toBe(TerminationState.ACCEPT);
+});
+
+test("CodeExecutor rejects if there is no flow command at the end", () => {
+    const executor = new CodeExecutor("ab", rejectIfNoTerminationProgram);
+
+    while (executor.execute()) {
+        continue;
+    }
+    
+    expect(executor.terminationStatus).toBe(TerminationState.REJECT);
 });

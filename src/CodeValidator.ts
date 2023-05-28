@@ -118,15 +118,6 @@ export class CodeValidator extends CodeVisitor<void> {
         this.visitAll(module.blocks);
     }
 
-    public visitBasicBlock(block: BasicBlockContext): void {
-        this.maybeVisit(block.changeToCommand);
-        this.maybeVisit(block.flowCommand);
-    }
-    
-    public visitCoreBlock(block: CoreBasicBlockContext): void {
-        this.maybeVisit(block.changeToCommand);
-    }
-
     public visitSwitchBlock(block: SwitchBlockContext): void {
         const alphabetSet = new Set(this._alphabet);
         alphabetSet.add("");
@@ -147,7 +138,7 @@ export class CodeValidator extends CodeVisitor<void> {
                     const l = letter || "blank";
                     if (this._parameters!.has(letter)) {
                         seenParamValue = true;
-                    } else if (letter != "" && !this._alphabet?.has(l)) {
+                    } else if (letter != "" && !this._alphabet!.has(l)) {
                         throw new CodeError(switchCase.position, `The letter "${l}" is not part of the alphabet.`);
                     }
                     alphabetSet.delete(letter);
@@ -211,6 +202,16 @@ export class CodeValidator extends CodeVisitor<void> {
             const argument = paramCount == 1 ? "argument" : "arguments";
             throw new CodeError(command.position, `Expected ${paramCount} ${argument}.`);
         }
+    }    
+
+    public visitBasicBlock(block: BasicBlockContext): void {
+        this.maybeVisit(block.changeToCommand);
+        this.maybeVisit(block.flowCommand);
+        this.maybeVisit(block.moveCommand);
+    }
+    
+    public visitCoreBlock(block: CoreBasicBlockContext): void {
+        this.maybeVisit(block.changeToCommand);
     }
 
     public visitTermination(): void {

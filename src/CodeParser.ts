@@ -154,6 +154,20 @@ export class CodeParser {
     }
 
     /**
+     * Keeps executing the callback until we have de-indented (or reached the end of file), or the current value isn't equal to the given values
+     *  
+     * @param callback the function to call every time we have not de-indented
+     * @param values the values we expect that allows us to continue executing
+     * 
+     */
+    private _doUntilDeIndentAndMatch(callback: () => void, values:string[]) {
+        const prevStackLength = this._wrapper.indentationStack.length;
+        while (!this.reachedEnd && this._wrapper.indentationStack.length >= prevStackLength && values.includes(this._wrapper.currentValue)) {
+            callback(); 
+        }
+    }
+
+    /**
      * The parser for program
      * 
      */
@@ -171,10 +185,6 @@ export class CodeParser {
         
         const endPosition = this._wrapper.currentPosition;
         const position = CodePosition.combine(startPosition, endPosition);
-        
-        // if (modules.length === 0) {
-        //     throw new CodeError(position, `A program should have at least one module.`);
-        // }
         
         return new ProgramContext(position, alphabet, modules);
     }
@@ -294,20 +304,21 @@ export class CodeParser {
 
         let endPosition:CodePosition;
 
-        this._doUntilDeIndent(() => {
-            let newCase:CaseContext;
+        this._doUntilDeIndentAndMatch(() => {
+            let newCase:CaseContext|undefined = undefined;
             if (this._wrapper.currentValue === "if") {
                 newCase = this._parseIf();
             } else if (this._wrapper.currentValue === "while") {
                 newCase = this._parseWhile();
             } else if (this._wrapper.currentValue === "else") {
                 newCase = this._parseElse();
-            } else {
-                throw new CodeError(this._wrapper.currentPosition, `Unexpected start of case: "${this._wrapper.currentValue}".`);
+            } 
+
+            if (newCase !== undefined) {
+                cases.push(newCase);
+                endPosition = newCase.position;
             }
-            cases.push(newCase);
-            endPosition = newCase.position;
-        });
+        }, ["if", "while", "else"]);
         
         const position = CodePosition.combine(startPosition, endPosition!);
         

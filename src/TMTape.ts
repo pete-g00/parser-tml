@@ -12,9 +12,43 @@ import { Direction } from "./Context";
  * 
  */
 export class TMTape {
-    // the map of all the present non-blank values
+    /**
+     * The map of all the present non-blank values
+     */
     private _valueMap:Map<number, string>;
+
+    /**
+     * The current index in tape
+     */
     private _currentIndex:number;
+
+    /**
+     * The minimum index in tape
+     */
+    private get _minIndex():number {
+        let min:number|undefined = undefined;
+        for (const i of this._valueMap.keys()) {
+            if (min === undefined || i < min) {
+                min = i;
+            }
+        }
+
+        return min ?? 0;
+    }
+
+    /**
+     * The maximum index in tape
+     */
+    private get _maxIndex():number {
+        let max:number|undefined = undefined;
+        for (const i of this._valueMap.keys()) {
+            if (max === undefined || i > max) {
+                max = i;
+            }
+        }
+
+        return max ?? 0;
+    }
 
     /**
      * Constructs a Turing machine tape for the given value
@@ -24,7 +58,7 @@ export class TMTape {
     public constructor(value:string) {
         this._valueMap = new Map<number, string>();
         this._currentIndex = 0;
-
+        
         for (let i = 0; i < value.length; i++) {
             if (value[i].trim().length !== 0) {
                 this._valueMap.set(i, value[i]);
@@ -52,6 +86,12 @@ export class TMTape {
         switch (direction) {
             case Direction.LEFT:
                 this._currentIndex --;
+                break;
+            case Direction.START:
+                this._currentIndex = this._minIndex;
+                break;
+            case Direction.END:
+                this._currentIndex = this._maxIndex;
                 break;
             default:
                 this._currentIndex ++;

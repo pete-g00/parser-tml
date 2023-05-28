@@ -1,8 +1,12 @@
 alphabet = [a, b]
 module palindrome():
     if a:
+        changeto blank
+        move end
         goto check(a)
     if b:
+        changeto blank
+        move end
         goto check(b)
     else:
         accept
@@ -10,8 +14,6 @@ module palindrome():
 # given that the tape starts with letter x,
 # check that it also ends with x at the end
 module check(x):
-    changeto blank
-    move end
     if x, blank:
         changeto blank
         move start

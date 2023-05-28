@@ -304,9 +304,9 @@ export abstract class CaseContext extends Context {
     public abstract get firstBlock():BasicBlockContext | CoreBasicBlockContext;
 
     /**
-     * Whether this case applies to the given value.
+     * Whether this case applies to the given value (or its parametrised form).
      */
-    public abstract applies(value:string):boolean;
+    public abstract applies(value:string, argumentMap:Map<string, string>):boolean;
 }
 
 /**
@@ -335,8 +335,8 @@ export class IfCaseContext extends CaseContext {
         return this.blocks[0] as BasicBlockContext;
     }
 
-    public applies(value: string): boolean {
-        return this.values.includes(value);
+    public applies(value: string, argumentMap: Map<string, string>): boolean {
+        return (this.values.includes(value))  || (argumentMap.has(value) && this.values.includes(argumentMap.get(value)!));
     }
 
     public visit<T>(visitor: CodeVisitor<T>): T {
@@ -395,8 +395,8 @@ export class WhileCaseContext extends CaseContext {
         this.values = values;
     }
     
-    public applies(value: string): boolean {
-        return this.values.includes(value);
+    public applies(value: string, argumentMap:Map<string, string>): boolean {
+        return (this.values.includes(value))  || (argumentMap.has(value) && this.values.includes(argumentMap.get(value)!));
     }
 
     public get firstBlock(): CoreBasicBlockContext {

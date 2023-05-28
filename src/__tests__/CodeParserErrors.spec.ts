@@ -39,14 +39,6 @@ module main():
         move right
 `;
 
-const invalidCase = `alphabet = [a, b]
-module main():
-    if a:
-        move left
-    when x:
-        move right
-`;
-
 const missingIndentation = `alphabet = [a, b]
 module main():
     if a:
@@ -165,14 +157,6 @@ test("CodeParser throws an error when a while block has multiple basic blocks", 
     expect(() => {
         parser.parse();
     }).toThrow(new Error(`A core block must only be composed of a changeto and a move command.`));    
-});
-
-test("CodeParser throws an error when a case isn't an if or a while case", () => {
-    const parser = new CodeParser(invalidCase);
-
-    expect(() => {
-        parser.parse();
-    }).toThrow(new Error(`Unexpected start of case: "when".`));
 });
 
 test("CodeParser throws an error if indentation is missing", () => {
