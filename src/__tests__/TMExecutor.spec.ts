@@ -6,7 +6,7 @@ import { CodeConverter } from "../CodeConverter";
 import { ConstantTMState, TuringMachine } from "../TuringMachine";
 import { readFileSync } from "fs";
 
-const isDiv2 = readFileSync("./examples/isDiv2.txt", "utf-8");
+const isDiv2 = readFileSync("./src/examples/isDiv2Rec.txt", "utf-8");
 
 const isDiv2Parser = new CodeParser(isDiv2);
 const isDiv2Program = isDiv2Parser.parse();
@@ -17,7 +17,7 @@ test("TMExecutor initialises the tape as expected", () => {
     const executor = new TMExecutor("11", isDiv2TM);
     const tape = new TMTape("11");
 
-    expect(executor.currentState).toBe("q0");
+    expect(executor.currentState).toBe("isDiv2Rec.0");
     expect(executor.tape).toEqual(tape);
 });
 
@@ -25,17 +25,21 @@ test("TMExecutor executes the tape correctly", () => {
     const executor = new TMExecutor("11", isDiv2TM);
     const tape = new TMTape("11");
 
-    for (let i = 0; i < 2; i++) {
-        expect(executor.execute()).toBe(true);
+    expect(executor.execute()).toBe(true);
     
-        expect(executor.currentState).toBe("q0");
-        tape.move(Direction.RIGHT);
-        expect(executor.tape).toEqual(tape);
-    }
+    expect(executor.currentState).toBe("isDiv2Rec.0");
+    tape.move(Direction.RIGHT);
+    expect(executor.tape).toEqual(tape);
+    
+    expect(executor.execute()).toBe(true);
+    
+    expect(executor.currentState).toBe("isDiv2Rec.0");
+    tape.move(Direction.RIGHT);
+    expect(executor.tape).toEqual(tape);
 
     expect(executor.execute()).toBe(true);
     
-    expect(executor.currentState).toBe("q1");
+    expect(executor.currentState).toBe("isDiv2Rec.0.blank.1");
     tape.move(Direction.LEFT);
     expect(executor.tape).toEqual(tape);
 

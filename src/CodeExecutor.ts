@@ -1,18 +1,18 @@
-import { BasicBlockContext, BlockContext, CoreBasicBlockContext, Direction, ElseCaseContext, GoToContext, IfCaseContext, ProgramContext, SwitchBlockContext, TerminationContext, TerminationState, WhileCaseContext } from "./Context";
+import { BasicBlockContext, BlockContext, CoreBasicBlockContext, Direction, ElseCaseContext, GoToContext, IfCaseContext, NormalBlockContext, ProgramContext, SwitchBlockContext, TerminationContext, TerminationState } from "./Context";
 import { TapeExecutor } from "./TapeExecutor";
 
 export class CodeExecutor extends TapeExecutor {
     private _terminationStatus:TerminationState|undefined;
     private _program:ProgramContext;
     private _currentBlockIndexStack:number[];
-    private _currentBlocksStack:BlockContext[][];
+    private _currentBlocksStack:NormalBlockContext[][];
     private _argumentMapStack:Map<string, string>[];
     private _topLevelModuleStack:boolean[];
 
     /**
      * The current blocks being executed
      */
-    private get _currentBlocks(): BlockContext[] {
+    private get _currentBlocks(): NormalBlockContext[] {
         return this._currentBlocksStack[this._currentBlocksStack.length-1];
     }
 
@@ -43,7 +43,7 @@ export class CodeExecutor extends TapeExecutor {
      * @param blocks the blocks to push to the execution stack
      * @param pushingModule whether we are pushing the blocks of a module
      */
-    private _pushBlocks(blocks:BlockContext[], pushingModule:boolean):void {
+    private _pushBlocks(blocks:NormalBlockContext[], pushingModule:boolean):void {
         this._currentBlocksStack.push(blocks);
         this._currentBlockIndexStack.push(0);
         this._topLevelModuleStack.push(pushingModule);
