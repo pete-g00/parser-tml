@@ -20,7 +20,7 @@ export class TMTape {
     /**
      * The current index in tape
      */
-    private _currentIndex:number;
+    public currentIndex:number;
 
     /**
      * The minimum index in tape
@@ -57,7 +57,7 @@ export class TMTape {
      */
     public constructor(value:string) {
         this._valueMap = new Map<number, string>();
-        this._currentIndex = 0;
+        this.currentIndex = 0;
         
         for (let i = 0; i < value.length; i++) {
             if (value[i].trim().length !== 0) {
@@ -73,9 +73,9 @@ export class TMTape {
      */
     public change(letter:string):void {
         if (letter.trim().length === 0) {
-            this._valueMap.delete(this._currentIndex);
+            this._valueMap.delete(this.currentIndex);
         } else {
-            this._valueMap.set(this._currentIndex, letter);
+            this._valueMap.set(this.currentIndex, letter);
         }
     }
 
@@ -85,16 +85,16 @@ export class TMTape {
     public move(direction:Direction): void {
         switch (direction) {
             case Direction.LEFT:
-                this._currentIndex --;
+                this.currentIndex --;
                 break;
             case Direction.START:
-                this._currentIndex = this._minIndex;
+                this.currentIndex = this._minIndex;
                 break;
             case Direction.END:
-                this._currentIndex = this._maxIndex;
+                this.currentIndex = this._maxIndex;
                 break;
             default:
-                this._currentIndex ++;
+                this.currentIndex ++;
                 break;
         }
     }
@@ -106,6 +106,6 @@ export class TMTape {
      * @returns the value at the given index
      */
     public get(i:number): string {
-        return this._valueMap.get(this._currentIndex+i) || "";
+        return this._valueMap.get(this.currentIndex+i) || "";
     }
 }

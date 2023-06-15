@@ -163,6 +163,10 @@ export class ChangeToContext extends CoreCommandContext {
      */
     public readonly value:string;
 
+    public getNextValue(argumentMap: Map<string, string>) {
+        return argumentMap.get(this.value) ?? this.value;
+    }
+
     public constructor(position:CodePosition, value:string) {
         super(position);
         this.value = value;

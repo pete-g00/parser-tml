@@ -136,7 +136,7 @@ export class CodeExecutor extends TapeExecutor {
      * @param letter the next letter
      */
     private _execute(block:BasicBlockContext | CoreBasicBlockContext, letter: string): void {
-        this.tape.change(block.changeToCommand?.value ?? letter);
+        this.tape.change(block.changeToCommand?.getNextValue(this._currentArgumentMap) ?? letter);
         this.tape.move(block.moveCommand?.direction ?? Direction.LEFT);
     }
 

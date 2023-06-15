@@ -1,11 +1,11 @@
 {
   "name": "parser-tml",
-  "version": "1.4.2",
+  "version": "2.0.1",
   "description": "A parser for TML program",
-  "homepage": "https://github.com/pete-g00/Turing-Machine-Language/src/tml-parser",
+  "homepage": "github.com/pete-g00/parser-tml",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pete-g00/Turing-Machine-Language.git"
+    "url": "git+https://github.com/pete-g00/parser-tml.git"
   },
   "main": "index.js",
   "types": "index.d.ts",
