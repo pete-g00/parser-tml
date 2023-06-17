@@ -406,7 +406,7 @@ export class CodeConverter extends CodeVisitor<string|undefined> {
         // the first block is part of the switch case; the remaining blocks form a new sequence of blocks
         if (blocks.length > 1) {
             const newIdentifier = this._getCurrentLabel(false) + "." + extraLabel;
-            this._generateNextLabel(newIdentifier, this._currentArgs, 1);
+            const newLabel = this._generateNextLabel(newIdentifier, this._currentArgs, 1);
             this._pushBlocks(blocks, newIdentifier, false);
             
             for (let i = 1; i < blocks.length; i++) {
@@ -414,8 +414,8 @@ export class CodeConverter extends CodeVisitor<string|undefined> {
                 this._incrementIndex();
             }
             this._popBlocks();
-
-            return newIdentifier + ".1";
+            
+            return newLabel;
         }
 
         return undefined;
