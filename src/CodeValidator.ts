@@ -139,7 +139,7 @@ export class CodeValidator extends CodeVisitor<void> {
                     if (this._parameters!.has(letter)) {
                         seenParamValue = true;
                     } else if (letter != "" && !this._alphabet!.has(l)) {
-                        throw new CodeError(switchCase.position, `The letter "${l}" is not part of the alphabet.`);
+                        throw new CodeError(switchCase.position, `Undefined letter: "${l}".`);
                     }
                     alphabetSet.delete(letter);
                 }
@@ -189,8 +189,8 @@ export class CodeValidator extends CodeVisitor<void> {
     }
 
     public visitChangeTo(command: ChangeToContext): void  {
-        if (command.value !== "" && !this._alphabet!.has(command.value)) {
-            throw new CodeError(command.position, `The letter "${command.value}" is not part of the alphabet.`);
+        if (command.value !== "" && !this._alphabet!.has(command.value) && !this._parameters!.has(command.value)) {
+            throw new CodeError(command.position, `Undefined letter: "${command.value}".`);
         }
     }
 

@@ -324,7 +324,7 @@ export class CodeConverter extends CodeVisitor<string|undefined> {
             nextState = this._incrementIndexAndFindNextState() ?? "reject";
         }
 
-        const letter = block.changeToCommand?.value;
+        const letter = block.changeToCommand?.getNextValue(this._currentArgumentMap);
 
         return { nextState, letter, direction };
     }
@@ -353,7 +353,7 @@ export class CodeConverter extends CodeVisitor<string|undefined> {
             }
         }
         
-        const letter = block.changeToCommand?.value;
+        const letter = block.changeToCommand?.getNextValue(this._currentArgumentMap);
 
         return { nextState, letter, direction };
     }

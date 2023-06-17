@@ -224,7 +224,7 @@ test("CodeValidator throws an error if there is a switch case with a letter not 
 
     expect(() => {
         codeValidator.validate();
-    }).toThrow(new Error(`The letter "x" is not part of the alphabet.`));
+    }).toThrow(new Error(`Undefined letter: "x".`));
 });
 
 test("CodeValidator throws an error if there is no switch case applying to a letter in the alphabet", () => {
@@ -304,7 +304,7 @@ test("CodeValidator throws an error for an invalid letter in a changeto command"
 
     expect(() => {
         codeValidator.validate();
-    }).toThrow(new Error(`The letter "x" is not part of the alphabet.`));
+    }).toThrow(new Error(`Undefined letter: "x".`));
 });
 
 test("CodeValidator doesn't throw an error for \"changeto blank\" command", () => {
