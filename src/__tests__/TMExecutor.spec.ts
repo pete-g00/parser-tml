@@ -17,7 +17,7 @@ test("TMExecutor initialises the tape as expected", () => {
     const executor = new TMExecutor("11", isDiv2TM);
     const tape = new TMTape("11");
 
-    expect(executor.currentState).toBe("isDiv2Rec.0");
+    expect(executor.currentState).toBe("isDiv2Rec-0");
     expect(executor.tape).toEqual(tape);
 });
 
@@ -27,19 +27,19 @@ test("TMExecutor executes the tape correctly", () => {
 
     expect(executor.execute()).toBe(true);
     
-    expect(executor.currentState).toBe("isDiv2Rec.0");
+    expect(executor.currentState).toBe("isDiv2Rec-0");
     tape.move(Direction.RIGHT);
     expect(executor.tape).toEqual(tape);
     
     expect(executor.execute()).toBe(true);
     
-    expect(executor.currentState).toBe("isDiv2Rec.0");
+    expect(executor.currentState).toBe("isDiv2Rec-0");
     tape.move(Direction.RIGHT);
     expect(executor.tape).toEqual(tape);
 
     expect(executor.execute()).toBe(true);
     
-    expect(executor.currentState).toBe("isDiv2Rec.0.blank.1");
+    expect(executor.currentState).toBe("isDiv2Rec-0-blank-1");
     tape.move(Direction.LEFT);
     expect(executor.tape).toEqual(tape);
 

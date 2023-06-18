@@ -122,7 +122,7 @@ export class CodeConverter extends CodeVisitor<string|undefined> {
             showLabel = this._currentIdentifier + (addArgs ? "-" + this._currentArgs.join(",") : "");
         }
         const i = this._identifierIndexMap.get(moduleLabel)!;
-        return showLabel + "." + i.toString();
+        return showLabel + "-" + i.toString();
     }
 
     /**
@@ -187,14 +187,14 @@ export class CodeConverter extends CodeVisitor<string|undefined> {
         }
         const i = this._identifierIndexMap.get(moduleIdentifier) ?? (startWith ?? 0) - 1;
         this._identifierIndexMap.set(moduleIdentifier, i+1);
-        const label = moduleIdentifier + "." + (i+1).toString();
+        const label = moduleIdentifier + "-" + (i+1).toString();
         return label;
     }
 
     private _findNextLabel(n:number): string {
         const moduleLabel = this._identifierStack[n] + Array(...this._argumentMapStack[n].keys()).join(",");
         const i = this._identifierIndexMap.get(moduleLabel)!;
-        return moduleLabel + "." + (i+1).toString();
+        return moduleLabel + "-" + (i+1).toString();
     }
     
     /**
@@ -215,7 +215,7 @@ export class CodeConverter extends CodeVisitor<string|undefined> {
      * @param program the program
      */
     public visitProgram(program: ProgramContext):undefined {
-        this._turingMachine.initialState = program.modules[0].identifier + ".0";
+        this._turingMachine.initialState = program.modules[0].identifier + "-0";
         for (const module of program.modules) {
             this._idToModule.set(module.identifier, module);
         }
@@ -291,9 +291,9 @@ export class CodeConverter extends CodeVisitor<string|undefined> {
 
         // after that is done, come back and set the goto state to be that
         if (command.args.length == 0) {
-            return command.identifier + ".0";
+            return command.identifier + "-0";
         } else {
-            return command.identifier + "-" + command.args.join(",") + ".0";
+            return command.identifier + "-" + command.args.join(",") + "-0";
         }
     }
 
@@ -405,7 +405,7 @@ export class CodeConverter extends CodeVisitor<string|undefined> {
     private _visitIfOrElse(blocks: NormalBlockContext[], extraLabel:string): string|undefined {
         // the first block is part of the switch case; the remaining blocks form a new sequence of blocks
         if (blocks.length > 1) {
-            const newIdentifier = this._getCurrentLabel(false) + "." + extraLabel;
+            const newIdentifier = this._getCurrentLabel(false) + "-" + extraLabel;
             const newLabel = this._generateNextLabel(newIdentifier, this._currentArgs, 1);
             this._pushBlocks(blocks, newIdentifier, false);
             

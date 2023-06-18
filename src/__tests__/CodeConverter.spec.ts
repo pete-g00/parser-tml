@@ -86,10 +86,10 @@ test("CodeConverter can convert a module with a single block", () => {
     const codeConverter = new CodeConverter(singleBlockProgram);
     const singleBlockTM = codeConverter.convert();
 
-    expect(singleBlockTM.initialState).toBe("simple.0");
+    expect(singleBlockTM.initialState).toBe("simple-0");
     expect(singleBlockTM.states.length).toBe(1);
     
-    const state = singleBlockTM.getState("simple.0")!;
+    const state = singleBlockTM.getState("simple-0")!;
     const change:TMChange = {
         nextState: "reject",
         direction: Direction.RIGHT,
@@ -108,9 +108,9 @@ test("CodeConverter can convert a module with a goto statement", () => {
 
     expect(moduleWithGotoTM.states.length).toBe(2);
 
-    let state = moduleWithGotoTM.getState("simple.0")!;
+    let state = moduleWithGotoTM.getState("simple-0")!;
     let change:TMChange = {
-        nextState: "simple.1",
+        nextState: "simple-1",
         direction: Direction.RIGHT,
         letter: ""
     };    
@@ -122,9 +122,9 @@ test("CodeConverter can convert a module with a goto statement", () => {
     change.letter = "b";
     expect(state.transition("b")).toEqual(change);
     
-    state = moduleWithGotoTM.getState("simple.1")!;
+    state = moduleWithGotoTM.getState("simple-1")!;
     change = {
-        nextState: "simple.0",
+        nextState: "simple-0",
         direction: Direction.LEFT,
         letter: "b"
     };
@@ -141,7 +141,7 @@ test("CodeConverter can convert a single module that has if/else cases", () => {
 
     expect(moduleWithIfTM.states.length).toBe(1);
 
-    const state = moduleWithIfTM.getState("simple.0")!;
+    const state = moduleWithIfTM.getState("simple-0")!;
     let change:TMChange = {
         nextState: "accept",
         direction: Direction.RIGHT,
@@ -168,9 +168,9 @@ test("CodeConverter can convert a single module that has while cases", () => {
 
     expect(moduleWithWhileTM.states.length).toBe(1);
 
-    let state = moduleWithWhileTM.getState("simple.0")!;
+    let state = moduleWithWhileTM.getState("simple-0")!;
     let change:TMChange = {
-        nextState: "simple.0",
+        nextState: "simple-0",
         direction: Direction.RIGHT,
         letter: "b"
     };
@@ -199,9 +199,9 @@ test("CodeConverter can convert a module with an if block body", () => {
 
     expect(moduleWithIfBlockTM.states.length).toBe(2);
 
-    let state = moduleWithIfBlockTM.getState("simple.0")!;
+    let state = moduleWithIfBlockTM.getState("simple-0")!;
     let change:TMChange = {
-        nextState: "simple.0",
+        nextState: "simple-0",
         direction: Direction.RIGHT,
         letter: "b"
     };
@@ -215,15 +215,15 @@ test("CodeConverter can convert a module with an if block body", () => {
     expect(state.transition("a")).toEqual(change); 
     
     change = {
-        nextState: "simple.0.blank.1",
+        nextState: "simple-0-blank-1",
         direction: Direction.RIGHT,
         letter: ""
     };
     expect(state.transition("")).toEqual(change);
 
-    state = moduleWithIfBlockTM.getState("simple.0.blank.1")!;
+    state = moduleWithIfBlockTM.getState("simple-0-blank-1")!;
     change = {
-        nextState: "simple.0",
+        nextState: "simple-0",
         direction: Direction.LEFT,
         letter: "b"
     };
@@ -240,9 +240,9 @@ test("CodeConverter can convert a module with multiple if/else block bodies", ()
 
     expect(moduleWithIfBlocksTM.states.length).toBe(4);
 
-    let state = moduleWithIfBlocksTM.getState("simple.0")!;
+    let state = moduleWithIfBlocksTM.getState("simple-0")!;
     let change:TMChange = {
-        nextState: "simple.1",
+        nextState: "simple-1",
         direction: Direction.LEFT,
         letter: ""
     };
@@ -250,29 +250,29 @@ test("CodeConverter can convert a module with multiple if/else block bodies", ()
     expect(state.transition("b")).toEqual(change);
     expect(state.transition("")).toEqual(change);
     
-    state = moduleWithIfBlocksTM.getState("simple.1")!;
+    state = moduleWithIfBlocksTM.getState("simple-1")!;
     change = {
-        nextState: "simple.1",
+        nextState: "simple-1",
         direction: Direction.RIGHT,
         letter: "b"
     };
     expect(state.transition("b")).toEqual(change);
 
     change = {
-        nextState: "simple.1.a.1",
+        nextState: "simple-1-a-1",
         direction: Direction.LEFT,
         letter: "a"
     };
     expect(state.transition("a")).toEqual(change); 
     
     change = {
-        nextState: "simple.1.else.1",
+        nextState: "simple-1-else-1",
         direction: Direction.RIGHT,
         letter: ""
     };
     expect(state.transition("")).toEqual(change);
 
-    state = moduleWithIfBlocksTM.getState("simple.1.a.1")!;
+    state = moduleWithIfBlocksTM.getState("simple-1-a-1")!;
     change = {
         nextState: "reject",
         direction: Direction.LEFT,
@@ -282,9 +282,9 @@ test("CodeConverter can convert a module with multiple if/else block bodies", ()
     expect(state.transition("b")).toEqual(change);
     expect(state.transition("")).toEqual(change);
 
-    state = moduleWithIfBlocksTM.getState("simple.1.else.1")!;
+    state = moduleWithIfBlocksTM.getState("simple-1-else-1")!;
     change = {
-        nextState: "simple.0",
+        nextState: "simple-0",
         direction: Direction.RIGHT,
         letter: "b"
     };
@@ -299,22 +299,22 @@ test("CodeConverter can convert multiple modules", () => {
     const codeConverter = new CodeConverter(multipleModulesProgram);
     const multipleModulesTM = codeConverter.convert();
 
-    expect(multipleModulesTM.initialState).toBe("simple.0");
-    expect(multipleModulesTM.states.sort()).toEqual(["basic.0", "simple.0"]);
+    expect(multipleModulesTM.initialState).toBe("simple-0");
+    expect(multipleModulesTM.states.sort()).toEqual(["basic-0", "simple-0"]);
 
-    let state = multipleModulesTM.getState("simple.0")!;
+    let state = multipleModulesTM.getState("simple-0")!;
     let change:TMChange = {
         letter: "a",
         direction: Direction.RIGHT,
-        nextState: "basic.0"
+        nextState: "basic-0"
     };
     expect(state.transition("a")).toEqual(change);
 
-    state = multipleModulesTM.getState("basic.0")!;
+    state = multipleModulesTM.getState("basic-0")!;
     change = {
         letter: "a",
         direction: Direction.LEFT,
-        nextState: "simple.0"
+        nextState: "simple-0"
     };
     expect(state.transition("a")).toEqual(change);
 });
@@ -325,18 +325,18 @@ test("CodeConverter can convert parametrised modules", () => {
     const codeConverter = new CodeConverter(palindromeProgram);
     const palindromeProgramTM = codeConverter.convert();
 
-    expect(palindromeProgramTM.initialState).toBe("palindrome.0");
-    expect(palindromeProgramTM.states.sort()).toEqual(["check-a.0", "check-b.0", "palindrome.0"]);
+    expect(palindromeProgramTM.initialState).toBe("palindrome-0");
+    expect(palindromeProgramTM.states.sort()).toEqual(["check-a-0", "check-b-0", "palindrome-0"]);
 
-    let state = palindromeProgramTM.getState("palindrome.0")!;
+    let state = palindromeProgramTM.getState("palindrome-0")!;
     let change:TMChange = {
         letter: "",
         direction: Direction.END,
-        nextState: "check-a.0"
+        nextState: "check-a-0"
     };
     expect(state.transition("a")).toEqual(change);
 
-    change.nextState = "check-b.0";
+    change.nextState = "check-b-0";
     expect(state.transition("b")).toEqual(change);
 
     change = {
@@ -346,11 +346,11 @@ test("CodeConverter can convert parametrised modules", () => {
     };
     expect(state.transition("")).toEqual(change);
 
-    state = palindromeProgramTM.getState("check-a.0")!;
+    state = palindromeProgramTM.getState("check-a-0")!;
     change = {
         letter: '',
         direction: Direction.START,
-        nextState: "palindrome.0"
+        nextState: "palindrome-0"
     };
     expect(state.transition("")).toEqual(change);
     expect(state.transition("a")).toEqual(change);
@@ -362,11 +362,11 @@ test("CodeConverter can convert parametrised modules", () => {
     };
     expect(state.transition("b")).toEqual(change);
 
-    state = palindromeProgramTM.getState("check-b.0")!;
+    state = palindromeProgramTM.getState("check-b-0")!;
     change = {
         letter: '',
         direction: Direction.START,
-        nextState: "palindrome.0"
+        nextState: "palindrome-0"
     };
     expect(state.transition("")).toEqual(change);
     expect(state.transition("b")).toEqual(change);

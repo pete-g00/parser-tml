@@ -1,6 +1,6 @@
 {
   "name": "parser-tml",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "A parser for TML program",
   "homepage": "github.com/pete-g00/parser-tml",
   "repository": {
