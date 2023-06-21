@@ -123,9 +123,28 @@ export class CodeExecutor extends TapeExecutor {
      */
     public get currentBlock(): BlockContext | undefined {
         if (this._terminationStatus === undefined) {
-            return this._currentBlocks[this._currentBlockIndex];
+            const currentBlock = this._currentBlocks[this._currentBlockIndex];
+            return currentBlock;
         } 
         return undefined;
+    }
+
+    /**
+     * The current basic block being executed.
+     * 
+     * The value is undefined if the execution has terminated.
+     */
+    public get currentBasicBlock(): BasicBlockContext | CoreBasicBlockContext | undefined {
+        if (this._terminationStatus !== undefined) {
+            return undefined;
+        } 
+        
+        const currentBlock = this._currentBlocks[this._currentBlockIndex];
+        if (currentBlock instanceof BasicBlockContext) {
+            return currentBlock;
+        } else if (currentBlock instanceof SwitchBlockContext) {
+            return currentBlock.getCaseForLetter(this.tape.get(0), this._currentArgumentMap)?.firstBlock;
+        }
     }
 
     /**
@@ -156,7 +175,7 @@ export class CodeExecutor extends TapeExecutor {
         }
         // switch block => identify the relevant case and extract the first while/if block it matches (or the else block)
         else if (currentBlock instanceof SwitchBlockContext) {
-            const caseBlock = currentBlock.cases.find((_case) => _case.applies(tapehead, this._currentArgumentMap))!;
+            const caseBlock = currentBlock.getCaseForLetter(tapehead, this._currentArgumentMap)!;
             executionBlock = caseBlock.firstBlock;
             if (caseBlock instanceof IfCaseContext || caseBlock instanceof ElseCaseContext) {
                 this._pushBlocks(caseBlock.blocks, false);

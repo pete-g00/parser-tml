@@ -431,6 +431,19 @@ export class SwitchBlockContext extends BlockContext {
     public visit<T>(visitor: CodeVisitor<T>): T {
         return visitor.visitSwitchBlock(this);
     }
+
+    /**
+     * 
+     * Finds the case from the switch block that applies to the letter with respect to the argument map
+     * 
+     */
+    public getCaseForLetter(letter:string, argumentMap:Map<string, string>): CaseContext | undefined {
+        for (let i=0; i<this.cases.length; i++) {
+            if (this.cases[i].applies(letter, argumentMap)) {
+                return this.cases[i];
+            }
+        }
+    }
 }
 
 /**
